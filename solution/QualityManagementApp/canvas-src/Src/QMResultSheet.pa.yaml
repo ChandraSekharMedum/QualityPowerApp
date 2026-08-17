@@ -13,6 +13,11 @@ Screens:
     Properties:
       Fill: =RGBA(244, 246, 247, 1)
       LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+      # Refresh the line cache on entry. cog_targetrecordid is populated by the line sync
+      # flow, and a client holding a pre-sync copy would submit an empty target -- which is
+      # exactly what failed on QO 000219. The drain flow now also resolves it server-side,
+      # so this is belt and braces rather than the sole defence.
+      OnVisible: =Refresh('Quality Test Lines (cache)')
     Children:
       - RS_HeaderBar:
           Control: Label
@@ -279,6 +284,7 @@ Screens:
                      """,""TargetEntity"":""mserp_inventqualityorderlineresultentities"",""Lines"":[" &
                      Concat(varEntered As L2,
                        "{""TargetRecordId"":""" & L2.cog_targetrecordid &
+                       """,""QualityOrderNumber"":""" & varOrder.cog_qualityordernumber &
                        """,""TestId"":""" & L2.cog_testid &
                        """,""TestSequence"":" & L2.cog_testsequence &
                        ",""ResultValue"":" & Value(L2.RS_EnteredValue.Text) &

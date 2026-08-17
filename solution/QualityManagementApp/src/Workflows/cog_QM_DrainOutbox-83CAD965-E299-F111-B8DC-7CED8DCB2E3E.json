@@ -25,7 +25,7 @@
         }
       },
       "triggers": {
-        "When_an_outbox_row_is_created": {
+        "When_an_outbox_row_is_queued": {
           "type": "OpenApiConnectionWebhook",
           "inputs": {
             "host": {
@@ -35,9 +35,10 @@
               "operationId": "SubscribeWebhookTrigger"
             },
             "parameters": {
-              "subscriptionRequest/message": 1,
+              "subscriptionRequest/message": 3,
               "subscriptionRequest/entityname": "cog_outbox",
-              "subscriptionRequest/scope": 4
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filterexpression": "cog_outboxstatus eq 2"
             }
           }
         }
@@ -57,54 +58,138 @@
               "entityName": "cog_outboxes",
               "recordId": "@triggerOutputs()?['body/cog_outboxid']",
               "item/cog_outboxstatus": 3,
-              "item/cog_attempts": 1
+              "item/cog_attempts": "@add(coalesce(triggerOutputs()?['body/cog_attempts'], 0), 1)"
             }
           }
         },
-        "Parse_payload": {
+        "Process_the_submission": {
           "runAfter": {
             "Claim_the_outbox_row": [
               "Succeeded"
             ]
           },
-          "type": "ParseJson",
-          "inputs": {
-            "content": "@triggerOutputs()?['body/cog_payload']",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "Operation": {
-                  "type": "string"
-                },
-                "CorrelationId": {
-                  "type": "string"
-                },
-                "Company": {
-                  "type": "string"
-                },
-                "TargetEntity": {
-                  "type": "string"
-                },
-                "Lines": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "TargetRecordId": {
-                        "type": "string"
-                      },
-                      "TestId": {
-                        "type": "string"
-                      },
-                      "TestSequence": {
-                        "type": "integer"
-                      },
-                      "ResultValue": {
-                        "type": "number"
-                      },
-                      "TestResult": {
-                        "type": "integer"
+          "type": "Scope",
+          "actions": {
+            "Parse_payload": {
+              "runAfter": {},
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@triggerOutputs()?['body/cog_payload']",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Operation": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "CorrelationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "Company": {
+                      "type": "string"
+                    },
+                    "TargetEntity": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "Lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "TargetRecordId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "QualityOrderNumber": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "TestId": {
+                            "type": "string"
+                          },
+                          "TestSequence": {
+                            "type": [
+                              "integer",
+                              "string"
+                            ]
+                          },
+                          "ResultValue": {
+                            "type": [
+                              "number",
+                              "string"
+                            ]
+                          },
+                          "TestResult": {
+                            "type": [
+                              "integer",
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
                       }
+                    }
+                  }
+                }
+              }
+            },
+            "Apply_to_each_line": {
+              "runAfter": {
+                "Parse_payload": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach",
+              "foreach": "@body('Parse_payload')?['Lines']",
+              "actions": {
+                "Resolve_target_row": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "cog_QMConnRef_Dataverse",
+                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "ListRecords"
+                    },
+                    "parameters": {
+                      "entityName": "mserp_inventqualityorderlineresultentities",
+                      "$select": "mserp_inventqualityorderlineresultentityid",
+                      "$filter": "@concat('mserp_qualityordernumber eq ''', items('Apply_to_each_line')?['QualityOrderNumber'], ''' and mserp_qualitytestid eq ''', items('Apply_to_each_line')?['TestId'], ''' and mserp_qualityordersequencenumber eq ', string(items('Apply_to_each_line')?['TestSequence']), ' and mserp_dataareaid eq ''', body('Parse_payload')?['Company'], '''')",
+                      "$top": 1
+                    }
+                  }
+                },
+                "Update_the_F_and_O_result_line": {
+                  "runAfter": {
+                    "Resolve_target_row": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "cog_QMConnRef_Dataverse",
+                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateRecord"
+                    },
+                    "parameters": {
+                      "entityName": "mserp_inventqualityorderlineresultentities",
+                      "recordId": "@if(not(empty(items('Apply_to_each_line')?['TargetRecordId'])), items('Apply_to_each_line')?['TargetRecordId'], first(outputs('Resolve_target_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'])",
+                      "item/mserp_resultvalue": "@float(items('Apply_to_each_line')?['ResultValue'])"
                     }
                   }
                 }
@@ -112,37 +197,9 @@
             }
           }
         },
-        "Apply_to_each_line": {
-          "runAfter": {
-            "Parse_payload": [
-              "Succeeded"
-            ]
-          },
-          "type": "Foreach",
-          "foreach": "@body('Parse_payload')?['Lines']",
-          "actions": {
-            "Update_the_F_and_O_result_line": {
-              "runAfter": {},
-              "type": "OpenApiConnection",
-              "inputs": {
-                "host": {
-                  "connectionName": "cog_QMConnRef_Dataverse",
-                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
-                  "operationId": "UpdateRecord"
-                },
-                "parameters": {
-                  "entityName": "mserp_inventqualityorderlineresultentities",
-                  "recordId": "@items('Apply_to_each_line')?['TargetRecordId']",
-                  "item/mserp_resultvalue": "@items('Apply_to_each_line')?['ResultValue']"
-                }
-              }
-            }
-          }
-        },
         "Confirm_the_outbox_row": {
           "runAfter": {
-            "Apply_to_each_line": [
+            "Process_the_submission": [
               "Succeeded"
             ]
           },
@@ -158,15 +215,17 @@
               "entityName": "cog_outboxes",
               "recordId": "@triggerOutputs()?['body/cog_outboxid']",
               "item/cog_outboxstatus": 4,
-              "item/cog_processedon": "@utcNow()"
+              "item/cog_processedon": "@utcNow()",
+              "item/cog_lasterror": ""
             }
           }
         },
         "Flag_needs_attention": {
           "runAfter": {
-            "Apply_to_each_line": [
+            "Process_the_submission": [
               "Failed",
-              "TimedOut"
+              "TimedOut",
+              "Skipped"
             ]
           },
           "type": "OpenApiConnection",
@@ -181,8 +240,8 @@
               "entityName": "cog_outboxes",
               "recordId": "@triggerOutputs()?['body/cog_outboxid']",
               "item/cog_outboxstatus": 5,
-              "item/cog_lasterror": "@string(result('Apply_to_each_line'))",
-              "item/cog_processedon": "@utcNow()"
+              "item/cog_processedon": "@utcNow()",
+              "item/cog_lasterror": "@substring(string(result('Process_the_submission')), 0, min(3900, length(string(result('Process_the_submission')))))"
             }
           }
         }

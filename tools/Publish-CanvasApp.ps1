@@ -23,7 +23,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repo = Split-Path -Parent $here
 $cvs  = Join-Path $repo "solution\$SolutionName\canvas-src"
 $work = Join-Path $repo 'canvas-work'
 if (Test-Path $work) { Get-ChildItem $work -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }
@@ -94,6 +95,18 @@ Write-Output "=== 5. import ==="
 & pac solution import --path $importZip --force-overwrite --publish-changes --max-async-wait-time 20 @envArg
 
 Write-Output ""
-Write-Output "Imported. NOW OPEN THE APP IN POWER APPS STUDIO to validate the Power Fx --"
-Write-Output "pack does not check formula semantics and 'pac canvas validate' is retired."
-Write-Output "Then run tools\Export-Solution.ps1 and commit the refreshed source."
+Write-Output "=== 6. re-arm the flows ==="
+# MANDATORY after any solution import. The import leaves flows reading statecode 1/2 while
+# their Dataverse webhook registration is gone, so they silently stop firing and outbox rows
+# sit at Queued with no error. See Repair-FlowTriggers.ps1 for the full account.
+& (Join-Path $here 'Repair-FlowTriggers.ps1') -SolutionName $SolutionName
+
+Write-Output ""
+Write-Output "Imported and re-armed."
+Write-Output ""
+Write-Output "STILL TO DO BY HAND:"
+Write-Output "  1. Open the app in Power Apps Studio to validate the Power Fx. pack does not"
+Write-Output "     check formula semantics and 'pac canvas validate' is retired."
+Write-Output "  2. Prove a round trip -- submit a result and watch the queue reach Confirmed."
+Write-Output "     A flow reading 1/2 is not proof that its trigger fires."
+Write-Output "  3. Run tools\Export-Solution.ps1 and commit the refreshed source."
