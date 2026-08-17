@@ -123,6 +123,9 @@ Screens:
             - OL_Detail:
                 Control: Label@2.5.1
                 Properties:
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Color: =RGBA(107, 125, 132, 1)
                   Height: =20
                   Size: =9
@@ -135,6 +138,9 @@ Screens:
             - OL_Meta:
                 Control: Label@2.5.1
                 Properties:
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Color: =RGBA(107, 125, 132, 1)
                   Height: =18
                   Size: =8
@@ -148,6 +154,9 @@ Screens:
             - OL_Status:
                 Control: Label@2.5.1
                 Properties:
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Align: =Align.Center
                   Color: |
                     =Switch(ThisItem.cog_status,
@@ -173,6 +182,9 @@ Screens:
             - OL_Chevron:
                 Control: Label@2.5.1
                 Properties:
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Align: =Align.Center
                   Color: =RGBA(107, 125, 132, 1)
                   Height: =28

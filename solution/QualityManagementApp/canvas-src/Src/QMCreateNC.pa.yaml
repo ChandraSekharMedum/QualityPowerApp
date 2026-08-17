@@ -1,10 +1,13 @@
 # ************************************************************************************************
-# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
-# Use the maker portal to create and edit your Power Apps.
-# 
-# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
-# 
-# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# Quality Management -- Create Non-Conformance
+#
+# Rationale lives in docs\CANVAS-SOURCE-NOTES.md and docs\WRITE-PROBE-RESULTS.md, because
+# Export-Solution.ps1 regenerates this file from the live app and strips every comment.
+#
+# The one thing worth repeating here: EVERY ROW LABEL CARRIES ITS OWN OnSelect. A label swallows
+# the tap, so a gallery whose rows are covered by labels does not select from the gallery's
+# OnSelect alone. That is why the first version of this screen could not select a quality order.
+# The gallery OnSelect stays as well, for taps that land on bare template space.
 # ************************************************************************************************
 Screens:
   QMCreateNC:
@@ -22,287 +25,361 @@ Screens:
          Set(varNcAccountName, "");
          Set(varNcOrderNumber, "");
          Set(varNcItem, "");
+         Set(varNcItemName, "");
          Set(varNcId,
              "NC-" & Right(Text(Year(Today()), "0000"), 2) & Text(Month(Today()), "00") &
              Text(Day(Today()), "00") & "-" &
              Upper(Left(Substitute(Text(GUID()), "-", ""), 6)))
     Children:
       - NC_HeaderBar:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(255, 255, 255, 1)
-            Fill: =RGBA(13, 98, 115, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =56
-            PaddingLeft: =56
-            Size: =18
             Text: ="Create Non-Conformance"
+            X: =0
+            Y: =0
             Width: =Parent.Width
-      - NC_BackButton:
-          Control: Classic/Button@2.2.0
-          Properties:
-            BorderColor: =RGBA(255, 255, 255, 1)
-            BorderThickness: =1
-            Color: =RGBA(255, 255, 255, 1)
+            Height: =56
             Fill: =RGBA(13, 98, 115, 1)
-            Height: =32
-            OnSelect: =Back()
-            Size: =12
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =18
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =56
+            VerticalAlign: =VerticalAlign.Middle
+
+      - NC_BackButton:
+          Control: Classic/Button
+          Properties:
             Text: ="<"
-            Width: =40
             X: =8
             Y: =12
+            Width: =40
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =12
+            OnSelect: =Back()
+
       - NC_SyncStrip:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
-            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
-            FontWeight: =FontWeight.Semibold
-            Height: =28
-            PaddingLeft: =16
-            Size: =9
             Text: |
               =If(Connection.Connected,
                   "Online  -  the non-conformance reaches F&O within about 15 seconds of queuing",
                   "Offline  -  the non-conformance is held in the queue and sent when you reconnect")
-            Width: =Parent.Width
+            X: =0
             Y: =56
-      - NC_L1:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
+            Width: =Parent.Width
+            Height: =28
+            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Size: =9
             FontWeight: =FontWeight.Semibold
-            Height: =20
-            Size: =8
+            PaddingLeft: =16
+            VerticalAlign: =VerticalAlign.Middle
+
+      # ------------------------------------------------------------------ 1 type
+      - NC_L1:
+          Control: Label
+          Properties:
             Text: ="1   NON-CONFORMANCE TYPE"
-            Width: =650
             X: =16
             Y: =96
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
       - NC_TypeInternal:
-          Control: Classic/Button@2.2.0
+          Control: Classic/Button
           Properties:
-            BorderColor: =If(varNcType = 200000000, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
-            Color: =If(varNcType = 200000000, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
-            Fill: =If(varNcType = 200000000, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Text: ="Internal"
+            X: =16
+            Y: =120
+            Width: =206
             Height: =44
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            BorderThickness: =2
+            Fill: =If(varNcType = 200000000, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Color: =If(varNcType = 200000000, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            BorderColor: =If(varNcType = 200000000, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
             OnSelect: |
               =Set(varNcType, 200000000);
                Set(varNcAccountNumber, "");
                Set(varNcAccountName, "")
-            Size: =12
-            Text: ="Internal"
-            Width: =206
-            X: =16
-            Y: =120
+
       - NC_TypeCustomer:
-          Control: Classic/Button@2.2.0
+          Control: Classic/Button
           Properties:
-            BorderColor: =If(varNcType = 200000001, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
-            Color: =If(varNcType = 200000001, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
-            Fill: =If(varNcType = 200000001, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Text: ="Customer"
+            X: =238
+            Y: =120
+            Width: =206
             Height: =44
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            BorderThickness: =2
+            Fill: =If(varNcType = 200000001, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Color: =If(varNcType = 200000001, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            BorderColor: =If(varNcType = 200000001, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
             OnSelect: |
               =Set(varNcType, 200000001);
                Set(varNcAccountNumber, "");
                Set(varNcAccountName, "");
                Set(varNcOrderNumber, "")
-            Size: =12
-            Text: ="Customer"
-            Width: =206
-            X: =238
-            Y: =120
+
       - NC_TypeVendor:
-          Control: Classic/Button@2.2.0
+          Control: Classic/Button
           Properties:
-            BorderColor: =If(varNcType = 200000002, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
-            Color: =If(varNcType = 200000002, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
-            Fill: =If(varNcType = 200000002, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Text: ="Vendor"
+            X: =460
+            Y: =120
+            Width: =206
             Height: =44
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            BorderThickness: =2
+            Fill: =If(varNcType = 200000002, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Color: =If(varNcType = 200000002, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            BorderColor: =If(varNcType = 200000002, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
             OnSelect: |
               =Set(varNcType, 200000002);
                Set(varNcAccountNumber, "");
                Set(varNcAccountName, "");
                Set(varNcOrderNumber, "")
-            Size: =12
-            Text: ="Vendor"
-            Width: =206
-            X: =460
-            Y: =120
+
       - NC_TypeNote:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            Height: =18
-            Size: =8
             Text: |
               ="Service request, Production and Co-product production are not offered: no problem type " &
                "is configured for them in this environment."
-            Width: =650
             X: =16
             Y: =172
-      - NC_L2:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =20
-            Size: =8
-            Text: ="2   COMPANY"
             Width: =650
+            Height: =18
+            Size: =8
+            Color: =RGBA(107, 125, 132, 1)
+
+      # ------------------------------------------------------------------ 2 company
+      - NC_L2:
+          Control: Label
+          Properties:
+            Text: ="2   COMPANY"
             X: =16
             Y: =196
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
       - NC_CompanyGallery:
-          Control: Gallery@2.15.0
+          Control: Gallery
           Variant: Vertical
           Properties:
-            Height: =110
             Items: =SortByColumns(Distinct('Quality Orders (cache)', cog_company), "Value", SortOrder.Ascending)
+            X: =16
+            Y: =220
+            Width: =650
+            Height: =110
+            TemplateSize: =36
+            TemplatePadding: =0
+            ShowScrollbar: =true
             OnSelect: |
               =Set(varNcCompany, ThisItem.Value);
                Set(varNcProblemCode, "");
                Set(varNcAccountNumber, "");
                Set(varNcAccountName, "");
-               Set(varNcOrderNumber, "")
-            TemplatePadding: =0
-            TemplateSize: =36
-            Width: =650
-            X: =16
-            Y: =220
+               Set(varNcOrderNumber, "");
+               Set(varNcItem, "");
+               Set(varNcItemName, "")
           Children:
             - NC_CoRowFill:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =35
                   Fill: |
                     =If(ThisItem.Value = varNcCompany,
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
-                  Height: =35
-                  Width: =Parent.TemplateWidth
+
             - NC_CoName:
-                Control: Label@2.5.1
+                Control: Label
                 Properties:
-                  Color: =RGBA(16, 26, 30, 1)
-                  FontWeight: |
-                    =If(ThisItem.Value = varNcCompany, FontWeight.Semibold, FontWeight.Normal)
-                  Height: =24
-                  Size: =11
                   Text: |
                     =Upper(ThisItem.Value) & "   -   " &
                      CountRows(Filter('Quality Orders (cache)', cog_company = ThisItem.Value)) &
                      " orders cached"
-                  Width: =Parent.TemplateWidth - 120
                   X: =12
                   Y: =6
-            - NC_CoTick:
-                Control: Label@2.5.1
-                Properties:
-                  Align: =Align.Right
-                  Color: =RGBA(32, 97, 61, 1)
-                  FontWeight: =FontWeight.Semibold
+                  Width: =Parent.TemplateWidth - 120
                   Height: =24
-                  Size: =8
+                  Size: =11
+                  Underline: =true
+                  FontWeight: |
+                    =If(ThisItem.Value = varNcCompany, FontWeight.Semibold, FontWeight.Normal)
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcCompany, ThisItem.Value);
+                     Set(varNcProblemCode, "");
+                     Set(varNcAccountNumber, "");
+                     Set(varNcAccountName, "");
+                     Set(varNcOrderNumber, "");
+                     Set(varNcItem, "");
+                     Set(varNcItemName, "")
+
+            - NC_CoTick:
+                Control: Label
+                Properties:
                   Text: =If(ThisItem.Value = varNcCompany, "selected", "")
-                  Width: =92
                   X: =Parent.TemplateWidth - 104
                   Y: =6
+                  Width: =92
+                  Height: =24
+                  Size: =8
+                  FontWeight: =FontWeight.Semibold
+                  Align: =Align.Right
+                  VerticalAlign: =VerticalAlign.Middle
+                  Color: =RGBA(32, 97, 61, 1)
+                  OnSelect: |
+                    =Set(varNcCompany, ThisItem.Value);
+                     Set(varNcProblemCode, "");
+                     Set(varNcAccountNumber, "");
+                     Set(varNcAccountName, "");
+                     Set(varNcOrderNumber, "");
+                     Set(varNcItem, "");
+                     Set(varNcItemName, "")
+
             - NC_CoRule:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
-                  Fill: =RGBA(210, 220, 223, 1)
-                  Height: =1
-                  Width: =Parent.TemplateWidth
+                  X: =0
                   Y: =35
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
+      # ------------------------------------------------------------------ 3 source
       - NC_L3:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =20
-            Size: =8
             Text: |
               =Switch(varNcType,
-                  200000000, "3   QUALITY ORDER THE DEFECT WAS FOUND ON (optional)",
+                  200000000, "3   QUALITY ORDER THE DEFECT WAS FOUND ON (optional, fills in the item)",
                   200000001, "3   CUSTOMER WHO REPORTED IT",
                   200000002, "3   VENDOR WHO SUPPLIED IT",
                   "3   SOURCE")
-            Width: =650
             X: =16
             Y: =340
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
       - NC_OrderGallery:
-          Control: Gallery@2.15.0
+          Control: Gallery
           Variant: Vertical
           Properties:
-            Height: =190
+            Visible: =varNcType = 200000000
             Items: |
               =SortByColumns(
                  Filter('Quality Orders (cache)', cog_company = varNcCompany),
                  "cog_qualityordernumber", SortOrder.Descending)
+            X: =16
+            Y: =364
+            Width: =650
+            Height: =190
+            TemplateSize: =46
+            TemplatePadding: =0
+            ShowScrollbar: =true
             OnSelect: |
               =Set(varNcOrderNumber, ThisItem.cog_qualityordernumber);
                Set(varNcItem, ThisItem.cog_itemnumber);
-               Reset(NC_ItemInput)
-            TemplatePadding: =0
-            TemplateSize: =46
-            Visible: =varNcType = 200000000
-            Width: =650
-            X: =16
-            Y: =364
+               Set(varNcItemName, ThisItem.cog_productname)
           Children:
             - NC_OrderRowFill:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =45
                   Fill: |
                     =If(ThisItem.cog_qualityordernumber = varNcOrderNumber,
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
-                  Height: =45
-                  Width: =Parent.TemplateWidth
+
             - NC_OrderNo:
-                Control: Label@2.5.1
+                Control: Label
                 Properties:
-                  Color: =RGBA(13, 98, 115, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =38
-                  Size: =11
                   Text: =ThisItem.cog_qualityordernumber
-                  Width: =120
                   X: =12
                   Y: =4
-            - NC_OrderDesc:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(16, 26, 30, 1)
+                  Width: =120
                   Height: =38
-                  Size: =10
+                  Size: =11
+                  FontWeight: =FontWeight.Semibold
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcOrderNumber, ThisItem.cog_qualityordernumber);
+                     Set(varNcItem, ThisItem.cog_itemnumber);
+                     Set(varNcItemName, ThisItem.cog_productname)
+
+            - NC_OrderDesc:
+                Control: Label
+                Properties:
                   Text: |
                     =ThisItem.cog_itemnumber & "  -  " & ThisItem.cog_productname &
                      If(IsBlank(ThisItem.cog_batchnumber), "", "  -  " & ThisItem.cog_batchnumber)
-                  Width: =Parent.TemplateWidth - 152
                   X: =140
                   Y: =4
+                  Width: =Parent.TemplateWidth - 152
+                  Height: =38
+                  Size: =10
+                  Color: =RGBA(16, 26, 30, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcOrderNumber, ThisItem.cog_qualityordernumber);
+                     Set(varNcItem, ThisItem.cog_itemnumber);
+                     Set(varNcItemName, ThisItem.cog_productname)
+
             - NC_OrderRule:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
-                  Fill: =RGBA(210, 220, 223, 1)
-                  Height: =1
-                  Width: =Parent.TemplateWidth
+                  X: =0
                   Y: =45
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
       - NC_AccountSearch:
-          Control: Classic/TextInput@2.3.2
+          Control: Classic/TextInput
           Properties:
+            Visible: =varNcType <> 200000000
             Default: =""
-            Height: =36
             HintText: |
               =If(varNcType = 200000001, "search customers by account or name",
                   "search vendors by account or name")
-            Size: =11
-            Visible: =varNcType <> 200000000
-            Width: =650
             X: =16
             Y: =364
+            Width: =650
+            Height: =36
+            Size: =11
+
       - NC_AccountGallery:
-          Control: Gallery@2.15.0
+          Control: Gallery
           Variant: Vertical
           Properties:
-            Height: =148
+            Visible: =varNcType <> 200000000
             Items: |
               =SortByColumns(
                  Filter('Accounts (cache)',
@@ -312,61 +389,72 @@ Screens:
                          StartsWith(cog_accountnumber, NC_AccountSearch.Text) ||
                          StartsWith(cog_accountname, NC_AccountSearch.Text))),
                  "cog_accountnumber", SortOrder.Ascending)
+            X: =16
+            Y: =406
+            Width: =650
+            Height: =148
+            TemplateSize: =40
+            TemplatePadding: =0
+            ShowScrollbar: =true
             OnSelect: |
               =Set(varNcAccountNumber, ThisItem.cog_accountnumber);
                Set(varNcAccountName, ThisItem.cog_accountname)
-            TemplatePadding: =0
-            TemplateSize: =40
-            Visible: =varNcType <> 200000000
-            Width: =650
-            X: =16
-            Y: =406
           Children:
             - NC_AccRowFill:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =39
                   Fill: |
                     =If(ThisItem.cog_accountnumber = varNcAccountNumber,
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
-                  Height: =39
-                  Width: =Parent.TemplateWidth
+
             - NC_AccNo:
-                Control: Label@2.5.1
+                Control: Label
                 Properties:
-                  Color: =RGBA(13, 98, 115, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Height: =34
-                  Size: =11
                   Text: =ThisItem.cog_accountnumber
-                  Width: =120
                   X: =12
                   Y: =2
-            - NC_AccName:
-                Control: Label@2.5.1
-                Properties:
-                  Color: =RGBA(16, 26, 30, 1)
+                  Width: =120
                   Height: =34
-                  Size: =10
+                  Size: =11
+                  FontWeight: =FontWeight.Semibold
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcAccountNumber, ThisItem.cog_accountnumber);
+                     Set(varNcAccountName, ThisItem.cog_accountname)
+
+            - NC_AccName:
+                Control: Label
+                Properties:
                   Text: =ThisItem.cog_accountname
-                  Width: =Parent.TemplateWidth - 152
                   X: =140
                   Y: =2
+                  Width: =Parent.TemplateWidth - 152
+                  Height: =34
+                  Size: =10
+                  Color: =RGBA(16, 26, 30, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcAccountNumber, ThisItem.cog_accountnumber);
+                     Set(varNcAccountName, ThisItem.cog_accountname)
+
             - NC_AccRule:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
-                  Fill: =RGBA(210, 220, 223, 1)
-                  Height: =1
-                  Width: =Parent.TemplateWidth
+                  X: =0
                   Y: =39
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
       - NC_AccountEmpty:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(138, 86, 6, 1)
-            Fill: =RGBA(248, 235, 214, 1)
-            Height: =60
-            PaddingLeft: =12
-            PaddingRight: =12
-            Size: =9
             Text: |
               ="No " & If(varNcType = 200000001, "customers", "vendors") &
                " are cached for " & Upper(varNcCompany) &
@@ -377,241 +465,363 @@ Screens:
                CountRows(Filter('Accounts (cache)',
                                 cog_company = varNcCompany,
                                 cog_accountkind = If(varNcType = 200000001, 1, 2))) = 0
-            Width: =650
             X: =16
             Y: =406
-      - NC_L4:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =20
-            Size: =8
-            Text: ="4   ITEM, DEFECT QUANTITY, PRIORITY"
             Width: =650
+            Height: =60
+            Fill: =RGBA(248, 235, 214, 1)
+            Color: =RGBA(138, 86, 6, 1)
+            Size: =9
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+
+      # ------------------------------------------------------------------ 4 quantity
+      - NC_L4:
+          Control: Label
+          Properties:
+            Text: ="4   DEFECT QUANTITY AND PRIORITY"
             X: =16
             Y: =566
-      - NC_ItemInput:
-          Control: Classic/TextInput@2.3.2
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
+      - NC_QtyInput:
+          Control: Classic/TextInput
           Properties:
-            Default: =varNcItem
-            HintText: ="item number"
-            Size: =12
-            Width: =340
+            Default: =""
+            HintText: ="defect qty"
+            Format: =TextFormat.Number
             X: =16
             Y: =590
-      - NC_QtyInput:
-          Control: Classic/TextInput@2.3.2
-          Properties:
-            Align: =Align.Right
-            Default: =""
-            Format: =TextFormat.Number
-            HintText: ="defect qty"
-            Size: =12
             Width: =140
-            X: =370
-            Y: =590
+            Height: =40
+            Size: =12
+            Align: =Align.Right
+
       - NC_RushCheck:
-          Control: Classic/CheckBox@2.1.0
+          Control: Classic/CheckBox
           Properties:
-            Color: =RGBA(16, 26, 30, 1)
+            Text: ="Rush"
+            X: =176
+            Y: =594
+            Width: =140
             Height: =32
             Size: =11
-            Text: ="Rush"
-            Width: =140
-            X: =526
-            Y: =594
+            Color: =RGBA(16, 26, 30, 1)
+
       - NC_DateNote:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            Height: =18
-            Size: =8
             Text: |
               ="Non-conformance date is today, " & Text(Today(), "dd mmm yyyy") &
                ". F&O sets the approval status to New and takes the unit from the item."
-            Width: =650
             X: =16
             Y: =640
-      - NC_HowNote:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            Fill: =RGBA(233, 239, 241, 1)
-            Height: =90
-            PaddingLeft: =12
-            PaddingRight: =12
+            Width: =650
+            Height: =18
             Size: =8
+            Color: =RGBA(107, 125, 132, 1)
+
+      - NC_HowNote:
+          Control: Label
+          Properties:
             Text: |
               ="Queuing writes one outbox row. cog_QM_DrainNonConformance creates the record in F&O and " &
                "the queue turns CONFIRMED. If F&O rejects the type and problem type as an invalid " &
                "combination, the row turns ATTENTION with F&O's own message and Retry re-sends it " &
                "under the same correlation id, so a submission that did land is never written twice."
-            Width: =650
             X: =16
             Y: =664
-      - NC_R1:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =20
-            Size: =8
-            Text: ="5   PROBLEM TYPE"
             Width: =650
+            Height: =90
+            Fill: =RGBA(233, 239, 241, 1)
+            Color: =RGBA(107, 125, 132, 1)
+            Size: =8
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+
+      # ------------------------------------------------------------------ 5 item
+      - NC_R1:
+          Control: Label
+          Properties:
+            Text: ="5   ITEM"
             X: =700
             Y: =96
-      - NC_ProblemGallery:
-          Control: Gallery@2.15.0
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
+      - NC_ItemSearch:
+          Control: Classic/TextInput
+          Properties:
+            Default: =""
+            HintText: ="search items by number or product name"
+            X: =700
+            Y: =118
+            Width: =650
+            Height: =34
+            Size: =11
+
+      - NC_ItemGallery:
+          Control: Gallery
           Variant: Vertical
           Properties:
-            Height: =150
+            # Items come from cog_item, cached from POWERAPPSINVENTTABLEINVENTORYENTITY. No item
+            # master virtual table is generated in this environment, so that entity is the only
+            # item source available. Only companies with cached quality orders are synced.
+            Items: |
+              =SortByColumns(
+                 Filter('Items (cache)',
+                        cog_company = varNcCompany,
+                        (IsBlank(NC_ItemSearch.Text) ||
+                         StartsWith(cog_itemnumber, NC_ItemSearch.Text) ||
+                         StartsWith(cog_itemname, NC_ItemSearch.Text))),
+                 "cog_itemnumber", SortOrder.Ascending)
+            X: =700
+            Y: =156
+            Width: =650
+            Height: =104
+            TemplateSize: =34
+            TemplatePadding: =0
+            ShowScrollbar: =true
+            OnSelect: |
+              =Set(varNcItem, ThisItem.cog_itemnumber);
+               Set(varNcItemName, ThisItem.cog_itemname)
+          Children:
+            - NC_ItRowFill:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =33
+                  Fill: |
+                    =If(ThisItem.cog_itemnumber = varNcItem,
+                        RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+
+            - NC_ItNo:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.cog_itemnumber
+                  X: =12
+                  Y: =2
+                  Width: =120
+                  Height: =28
+                  Size: =11
+                  FontWeight: =FontWeight.Semibold
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcItem, ThisItem.cog_itemnumber);
+                     Set(varNcItemName, ThisItem.cog_itemname)
+
+            - NC_ItName:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.cog_itemname
+                  X: =140
+                  Y: =2
+                  Width: =Parent.TemplateWidth - 152
+                  Height: =28
+                  Size: =10
+                  Color: =RGBA(16, 26, 30, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varNcItem, ThisItem.cog_itemnumber);
+                     Set(varNcItemName, ThisItem.cog_itemname)
+
+            - NC_ItRule:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =33
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
+      # ------------------------------------------------------------------ 6 problem type
+      - NC_R2:
+          Control: Label
+          Properties:
+            Text: ="6   PROBLEM TYPE"
+            X: =700
+            Y: =266
+            Width: =650
+            Height: =20
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
+      - NC_ProblemGallery:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
             Items: |
               =SortByColumns(
                  Filter('Problem Types (cache)', cog_company = varNcCompany),
                  "cog_problemtypecode", SortOrder.Ascending)
-            OnSelect: =Set(varNcProblemCode, ThisItem.cog_problemtypecode)
-            TemplatePadding: =0
-            TemplateSize: =48
-            Width: =650
             X: =700
-            Y: =120
+            Y: =288
+            Width: =650
+            Height: =96
+            TemplateSize: =48
+            TemplatePadding: =0
+            ShowScrollbar: =true
+            OnSelect: =Set(varNcProblemCode, ThisItem.cog_problemtypecode)
           Children:
             - NC_PtRowFill:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =47
                   Fill: |
                     =If(ThisItem.cog_problemtypecode = varNcProblemCode,
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
-                  Height: =47
-                  Width: =Parent.TemplateWidth
+
             - NC_PtCode:
-                Control: Label@2.5.1
+                Control: Label
                 Properties:
-                  Color: =RGBA(13, 98, 115, 1)
-                  FontWeight: =FontWeight.Semibold
-                  Size: =11
                   Text: =ThisItem.cog_problemtypecode
-                  Width: =200
                   X: =12
                   Y: =4
+                  Width: =200
+                  Height: =40
+                  Size: =11
+                  FontWeight: =FontWeight.Semibold
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: =Set(varNcProblemCode, ThisItem.cog_problemtypecode)
+
             - NC_PtDesc:
-                Control: Label@2.5.1
+                Control: Label
                 Properties:
-                  Color: =RGBA(107, 125, 132, 1)
-                  Size: =10
                   Text: =ThisItem.cog_description
-                  Width: =Parent.TemplateWidth - 232
                   X: =220
                   Y: =4
+                  Width: =Parent.TemplateWidth - 232
+                  Height: =40
+                  Size: =10
+                  Color: =RGBA(107, 125, 132, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: =Set(varNcProblemCode, ThisItem.cog_problemtypecode)
+
             - NC_PtRule:
-                Control: Rectangle@2.3.0
+                Control: Rectangle
                 Properties:
-                  Fill: =RGBA(210, 220, 223, 1)
-                  Height: =1
-                  Width: =Parent.TemplateWidth
+                  X: =0
                   Y: =47
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
       - NC_ProblemEmpty:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(138, 86, 6, 1)
-            Fill: =RGBA(248, 235, 214, 1)
-            Height: =60
-            PaddingLeft: =12
-            PaddingRight: =12
-            Size: =9
             Text: |
               ="No problem types are set up for " & Upper(varNcCompany) &
                " in F&O, so a non-conformance cannot be raised against it. This is an F&O " &
                "configuration task, not an app limitation."
             Visible: |
               =CountRows(Filter('Problem Types (cache)', cog_company = varNcCompany)) = 0
-            Width: =650
             X: =700
-            Y: =120
+            Y: =288
+            Width: =650
+            Height: =60
+            Fill: =RGBA(248, 235, 214, 1)
+            Color: =RGBA(138, 86, 6, 1)
+            Size: =9
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+
       - NC_ProblemNote:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            Height: =18
-            Size: =8
             Text: |
               ="F&O allows only certain type and problem-type pairs and does not publish which. " &
                "If it rejects the pair, pick another problem type and retry."
-            Width: =650
             X: =700
-            Y: =276
-      - NC_R2:
-          Control: Label@2.5.1
-          Properties:
+            Y: =386
+            Width: =650
+            Height: =16
+            Size: =8
             Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
+
+      # ------------------------------------------------------------------ 7 reference
+      - NC_R3:
+          Control: Label
+          Properties:
+            Text: ="7   REFERENCE (optional)"
+            X: =700
+            Y: =408
+            Width: =650
             Height: =20
             Size: =8
-            Text: ="6   REFERENCE (optional)"
-            Width: =650
-            X: =700
-            Y: =300
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(107, 125, 132, 1)
+
       - NC_RefInput:
-          Control: Classic/TextInput@2.3.2
+          Control: Classic/TextInput
           Properties:
             Default: =varNcOrderNumber
             HintText: ="leave blank unless you have a real order number"
+            X: =700
+            Y: =430
+            Width: =650
+            Height: =36
             Size: =11
-            Width: =650
-            X: =700
-            Y: =324
+
       - NC_RefNote:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            Height: =18
-            Size: =8
             Text: |
-              ="F&O checks this against real order numbers and rejects anything it does not " &
-               "recognise. Leave it blank if you are not sure."
-            Width: =650
+              ="mserp_inventrefid is a lookup, not a note field. F&O checks it against real order " &
+               "numbers and rejects anything it does not recognise."
             X: =700
-            Y: =366
-      - NC_R3:
-          Control: Label@2.5.1
-          Properties:
-            Color: =RGBA(107, 125, 132, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =20
+            Y: =468
+            Width: =650
+            Height: =16
             Size: =8
-            Text: ="REVIEW"
-            Width: =650
-            X: =700
-            Y: =384
-      - NC_ReviewPanel:
-          Control: Rectangle@2.3.0
-          Properties:
-            Fill: =RGBA(255, 255, 255, 1)
-            Height: =196
-            Width: =650
-            X: =700
-            Y: =408
-      - NC_ReviewKeys:
-          Control: Label@2.5.1
-          Properties:
-            Align: =Align.Right
             Color: =RGBA(107, 125, 132, 1)
-            Height: =176
-            Size: =10
+
+      # ------------------------------------------------------------------ review
+      - NC_ReviewPanel:
+          Control: Rectangle
+          Properties:
+            X: =700
+            Y: =492
+            Width: =650
+            Height: =124
+            Fill: =RGBA(255, 255, 255, 1)
+
+      - NC_ReviewKeys:
+          Control: Label
+          Properties:
             Text: |
               ="Type" & Char(10) & "Company" & Char(10) & "Account" & Char(10) & "Item" &
                Char(10) & "Quantity" & Char(10) & "Problem type" & Char(10) & "NC number"
-            Width: =120
             X: =712
-            Y: =418
+            Y: =500
+            Width: =120
+            Height: =108
+            Size: =9
+            Align: =Align.Right
+            Color: =RGBA(107, 125, 132, 1)
+
       - NC_ReviewValues:
-          Control: Label@2.5.1
+          Control: Label
           Properties:
-            Color: =RGBA(16, 26, 30, 1)
-            FontWeight: =FontWeight.Semibold
-            Height: =176
-            Size: =10
             Text: |
               =Switch(varNcType, 200000000, "Internal", 200000001, "Customer",
                       200000002, "Vendor", "-") & Char(10) &
@@ -619,61 +829,75 @@ Screens:
                If(varNcType = 200000000, "not applicable",
                   IsBlank(varNcAccountNumber), "not selected",
                   varNcAccountNumber & "  -  " & varNcAccountName) & Char(10) &
-               If(IsBlank(NC_ItemInput.Text), "not entered", NC_ItemInput.Text) & Char(10) &
+               If(IsBlank(varNcItem), "not selected",
+                  varNcItem & If(IsBlank(varNcItemName), "", "  -  " & varNcItemName)) & Char(10) &
                If(Coalesce(Value(NC_QtyInput.Text), 0) <= 0, "not entered", NC_QtyInput.Text) &
                If(NC_RushCheck.Value, "   (rush)", "") & Char(10) &
                If(IsBlank(varNcProblemCode), "not selected", varNcProblemCode) & Char(10) &
                varNcId
-            Width: =494
             X: =844
-            Y: =418
-      - NC_Validation:
-          Control: Label@2.5.1
-          Properties:
-            Color: |
-              =If(!IsBlank(NC_ItemInput.Text) &&
-                  Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
-                  !IsBlank(varNcProblemCode) &&
-                  (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
-                  RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
-            Fill: |
-              =If(!IsBlank(NC_ItemInput.Text) &&
-                  Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
-                  !IsBlank(varNcProblemCode) &&
-                  (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
-                  RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            Y: =500
+            Width: =494
+            Height: =108
+            Size: =9
             FontWeight: =FontWeight.Semibold
-            Height: =48
-            PaddingLeft: =12
-            PaddingRight: =12
-            Size: =10
+            Color: =RGBA(16, 26, 30, 1)
+
+      - NC_Validation:
+          Control: Label
+          Properties:
             Text: |
-              =If(!IsBlank(NC_ItemInput.Text) &&
+              =If(!IsBlank(varNcItem) &&
                   Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
                   !IsBlank(varNcProblemCode) &&
                   (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
                   "Ready to queue as " & varNcId & ".",
                   "Still needed:  " &
-                  If(IsBlank(NC_ItemInput.Text), "item   ", "") &
+                  If(IsBlank(varNcItem), "item   ", "") &
                   If(Coalesce(Value(NC_QtyInput.Text), 0) <= 0, "defect quantity   ", "") &
                   If(IsBlank(varNcProblemCode), "problem type   ", "") &
                   If(varNcType <> 200000000 && IsBlank(varNcAccountNumber),
                      If(varNcType = 200000001, "customer", "vendor") & " account   ", ""))
-            Width: =650
             X: =700
-            Y: =616
+            Y: =624
+            Width: =650
+            Height: =44
+            Size: =10
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+            Color: |
+              =If(!IsBlank(varNcItem) &&
+                  Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
+                  !IsBlank(varNcProblemCode) &&
+                  (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
+                  RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Fill: |
+              =If(!IsBlank(varNcItem) &&
+                  Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
+                  !IsBlank(varNcProblemCode) &&
+                  (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
+                  RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+
       - NC_SubmitButton:
-          Control: Classic/Button@2.2.0
+          Control: Classic/Button
           Properties:
+            Text: ="Queue non-conformance"
+            X: =700
+            Y: =676
+            Width: =650
+            Height: =44
+            Fill: =RGBA(13, 98, 115, 1)
             Color: =RGBA(255, 255, 255, 1)
+            Size: =13
+            FontWeight: =FontWeight.Semibold
             DisplayMode: |
-              =If(!IsBlank(NC_ItemInput.Text) &&
+              =If(!IsBlank(varNcItem) &&
                   Coalesce(Value(NC_QtyInput.Text), 0) > 0 &&
                   !IsBlank(varNcProblemCode) &&
                   (varNcType = 200000000 || !IsBlank(varNcAccountNumber)),
                   DisplayMode.Edit, DisplayMode.Disabled)
-            Fill: =RGBA(13, 98, 115, 1)
-            Height: =48
             OnSelect: |
               =Set(varNcCorrelationId, Text(GUID()));
                Patch(Outbox, Defaults(Outbox),
@@ -688,13 +912,13 @@ Screens:
                      "{""Operation"":""PostNonConformance"",""CorrelationId"":""" & varNcCorrelationId &
                      """,""Company"":""" & varNcCompany &
                      """,""NonConformanceId"":""" & varNcId &
-                     """,""Type"":" & varNcType &
+                     """,""Type"":" & Text(varNcType, "0") &
                      ",""ProblemTypeId"":""" & varNcProblemCode &
-                     """,""ItemId"":""" & NC_ItemInput.Text &
+                     """,""ItemId"":""" & varNcItem &
                      """,""NcDate"":""" & Text(Year(Today()), "0000") & "-" & Text(Month(Today()), "00") &
                      "-" & Text(Day(Today()), "00") & "T00:00:00Z" &
-                     """,""DefectQty"":" & Coalesce(Value(NC_QtyInput.Text), 0) &
-                     ",""Rush"":" & If(NC_RushCheck.Value, 200000001, 200000000) &
+                     """,""DefectQty"":" & Text(Coalesce(Value(NC_QtyInput.Text), 0), "0.####") &
+                     ",""Rush"":" & Text(If(NC_RushCheck.Value, 200000001, 200000000), "0") &
                      ",""VendAccount"":""" & If(varNcType = 200000002, varNcAccountNumber, "") &
                      """,""CustAccount"":""" & If(varNcType = 200000001, varNcAccountNumber, "") &
                      """,""RefId"":""" & NC_RefInput.Text & """}" });
@@ -704,8 +928,10 @@ Screens:
                Set(varNcAccountName, "");
                Set(varNcOrderNumber, "");
                Set(varNcItem, "");
-               Reset(NC_ItemInput);
+               Set(varNcItemName, "");
                Reset(NC_QtyInput);
+               Reset(NC_ItemSearch);
+               Reset(NC_AccountSearch);
                Reset(NC_RefInput);
                Reset(NC_RushCheck);
                Set(varNcId,
@@ -713,8 +939,3 @@ Screens:
                    Text(Day(Today()), "00") & "-" &
                    Upper(Left(Substitute(Text(GUID()), "-", ""), 6)));
                Navigate(QMQueue, ScreenTransition.None)
-            Size: =13
-            Text: ="Queue non-conformance"
-            Width: =650
-            X: =700
-            Y: =676

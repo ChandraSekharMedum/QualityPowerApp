@@ -139,6 +139,34 @@ Write-Output "=== 6. re-arm the flows ==="
 & (Join-Path $here 'Repair-FlowTriggers.ps1') -SolutionName $SolutionName
 
 Write-Output ""
+Write-Output "=== 7. verify the data sources survived the import ==="
+# The step 3 guard compares against the app as it was BEFORE the import, so it cannot see a data
+# source added in Studio while the import was in flight -- and an import takes long enough for
+# that to happen. This re-exports and reports anything that went missing, which turns a silent
+# loss into a named instruction instead of a mystery broken screen.
+$verifyZip = "$work\verify.zip"
+& pac solution export --name $SolutionName --path $verifyZip --overwrite @envArg
+$verifyDir = "$work\verify"
+New-Item -ItemType Directory -Force -Path $verifyDir | Out-Null
+[System.IO.Compression.ZipFile]::ExtractToDirectory($verifyZip, $verifyDir)
+$after = Get-ChildItem "$verifyDir\CanvasApps" -Filter '*.msapp' | Select-Object -First 1
+$afterDs = if ($after) { Get-MsappDataSourceNames $after.FullName } else { $null }
+if ($null -ne $afterDs -and $null -ne $liveDs) {
+    $gone = @($liveDs | Where-Object { $afterDs -notcontains $_ })
+    Write-Output ("  data sources: {0} before, {1} after" -f @($liveDs).Count, @($afterDs).Count)
+    if ($gone.Count -gt 0) {
+        Write-Output ""
+        Write-Output "  ** DATA SOURCES LOST IN THE IMPORT **"
+        foreach ($g in $gone) { Write-Output "     $g" }
+        Write-Output "  Re-add them in Studio, Save and Publish, then run Export-Solution.ps1."
+    } else {
+        Write-Output "  none lost"
+    }
+} else {
+    Write-Output "  could not verify"
+}
+
+Write-Output ""
 Write-Output "Imported and re-armed."
 Write-Output ""
 Write-Output "STILL TO DO BY HAND:"

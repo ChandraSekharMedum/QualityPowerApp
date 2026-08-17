@@ -41,6 +41,25 @@ Screens:
             Width: =40
             X: =8
             Y: =12
+      - RS_PhotosButton:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =32
+            OnSelect: =Navigate(QMAttachments, ScreenTransition.None)
+            Size: =11
+            Text: |
+              ="Photos" &
+               With({ n: CountRows(Filter('Attachments (draft)',
+                          cog_qualityordernumber = varOrder.cog_qualityordernumber,
+                          cog_company = varOrder.cog_company)) },
+                  If(n > 0, "  (" & n & ")", ""))
+            Width: =120
+            X: =Parent.Width - 136
+            Y: =12
       - RS_Context:
           Control: Label@2.5.1
           Properties:

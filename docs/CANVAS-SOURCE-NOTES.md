@@ -55,6 +55,7 @@ Current data sources:
 | `Outbox` | `cog_outbox` |
 | `Problem Types (cache)` | `cog_problemtype` |
 | `Accounts (cache)` | `cog_account` |
+| `Items (cache)` | `cog_item` |
 
 ---
 
@@ -77,13 +78,26 @@ reuses only templates already proven in this app.
 
 ---
 
-## 4. Put `OnSelect` on the Gallery, not on the row rectangle
+## 4. Row selection needs `OnSelect` on every label, not just on the Gallery
 
-Gallery children ascend by z-index, so a `Rectangle` declared first sits *underneath* every
-label in the template. An `OnSelect` on that rectangle only fires where a tap misses the text —
-which reads as intermittent selection, and is what made the order list feel broken.
+This one bit twice, and the second bite disproved the first fix.
 
-Row selection goes on the **gallery's** `OnSelect`.
+**First symptom — intermittent selection.** Gallery children ascend by z-index, so a `Rectangle`
+declared first sits *underneath* every label in the template. An `OnSelect` on that rectangle
+only fires where a tap misses the text, which reads as a flaky row.
+
+**Second symptom — no selection at all.** Moving the handler to the **gallery's** `OnSelect` is
+not enough either. A `Label` swallows the tap and does not pass it up, so a gallery whose rows
+are fully covered by labels never fires its own `OnSelect`. The first Create NC screen could not
+select a quality order for exactly this reason, while the order list appeared to work only
+because its order-number label happened to carry its own handler.
+
+**The rule:** put the selection handler on the **gallery** *and* on **every label in the row
+template**. There is no shared-handler mechanism in canvas apps, so the formula gets duplicated —
+that is the cost of the pattern, and it is cheaper than a dead row.
+
+Underlining the row's primary identifier and colouring it as a link is worth doing: it tells the
+inspector the row is tappable rather than leaving them to discover it.
 
 ---
 
@@ -115,7 +129,9 @@ Studio.** That is why the publish script ends by telling you to open it.
 | Problem types not filtered by NC type | F&O restricts the valid pairs and publishes no mapping entity. The screen offers all of them and surfaces F&O's rejection on the queue row. |
 | Reference prefilled from the quality order | `mserp_inventrefid` is a lookup — a real order number is accepted, arbitrary text is rejected. |
 | NC number generated client-side, `NC-yymmdd-<6 hex>` | F&O assigns no number sequence on this entity, and D-02 requires the screen to work offline, so the id cannot be fetched at submit time. **Open governance question under R7.** |
-| Company picker sourced from cached quality orders | Those are the legal entities the inspector actually has quality work in, and both problem types and accounts are company-scoped in F&O. |
+| Item is a searchable picker, not a text box | Typing an item number is error-prone and F&O rejects unknown ones only after submit. Source is `cog_item`, cached from `POWERAPPSINVENTTABLEINVENTORYENTITY` — the **only** item source available, since no item master virtual table is generated here (`InventTableEntity` and `EcoResReleasedProductV2Entity` both 404). |
+| Item cache limited to companies with cached quality orders | 306 rows instead of 3022. A new company appears automatically once it has a cached quality order. |
+| Company picker sourced from cached quality orders | Those are the legal entities the inspector actually has quality work in, and problem types, accounts and items are all company-scoped in F&O. |
 | Selection tracked as scalars (`varNcAccountNumber`) not records | A `Set(var, Blank())` record has no type, so `var.field` fails to compile. Scalars avoid the whole problem. |
 | `Text(Year(Today()), "0000")`, never bare `Text(Year(...))` | Unformatted `Text()` on a number can emit a thousands separator — `"2,026"` — which would corrupt both the id and the ISO date. |
 
