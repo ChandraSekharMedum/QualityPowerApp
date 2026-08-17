@@ -78,6 +78,22 @@ number sequence on this entity, so the app needs its own scheme. Set
 `mserp_custaccount` exists on the base entity but **not** on
 `POWERAPPSINVENTNONCONFORMATIONENTITY`, which is another reason to use the base entity.
 
+### Two optional fields, one of which is a trap
+
+Probed while building the screen:
+
+| Field | `IsValidForCreate` | POST behaviour | In the screen? |
+|---|---|---|---|
+| `mserp_rush` (No / Yes) | True | Persists | **Yes** — a Rush checkbox |
+| `mserp_unitid` | **False** | **Accepted, then silently discarded** — reads back `''` | **No** |
+
+`mserp_unitid` is the same silent-discard pattern seen on the `POWERAPP*` quality order line
+entities: the POST returns 201 and the value simply is not there. F&O derives the unit from the
+item. The Dataverse connector is stricter than the OData endpoint and rejects the field outright
+with `WorkflowOperationParametersExtraParameter`, which is the more honest of the two failures.
+
+A quantity input with no unit input is therefore correct, not an omission.
+
 ---
 
 ## 3. Batch disposition — blocked

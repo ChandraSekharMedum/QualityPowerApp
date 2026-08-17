@@ -2,10 +2,13 @@
 # Quality Management -- Home
 # Visual treatment A "Instrument" (D-09).
 #
-# Quality order creation and non-conformance creation are deferred: Phase 1 proved neither
-# can be created over OData (Owner-dimension defect on the virtual entity path; the quality
-# entities are not exposed to the F&O connector). Those tiles are shown but disabled so the
-# intent is visible without offering a dead action.
+# Quality order creation stays deferred: the Owner-dimension defect on the virtual entity path
+# blocks it and the quality entities are not exposed to the F&O connector. The tile is shown
+# but disabled so the intent is visible without offering a dead action.
+#
+# Non-conformance creation is NOT deferred any more. Phase 1 concluded it was impossible, but
+# that test only used POWERAPPSINVENTNONCONFORMATIONENTITY; the base entity accepts creates for
+# Internal, Customer and Vendor. See docs/WRITE-PROBE-RESULTS.md.
 # ************************************************************************************************
 Screens:
   QMHome:
@@ -116,22 +119,23 @@ Screens:
       - HM_Tile_NC:
           Control: Classic/Button
           Properties:
-            Text: ="Create NC" & Char(10) & "later release"
+            Text: ="Create NC" & Char(10) & "internal, customer, vendor"
             X: =Parent.Width / 2 + 6
             Y: =If(varQueued > 0, 266, 226)
             Width: =(Parent.Width - 44) / 2
             Height: =110
-            Fill: =RGBA(233, 239, 241, 1)
-            Color: =RGBA(107, 125, 132, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Color: =RGBA(13, 98, 115, 1)
             BorderColor: =RGBA(210, 220, 223, 1)
-            BorderThickness: =1
+            BorderThickness: =2
             Size: =12
-            DisplayMode: =DisplayMode.Disabled
+            FontWeight: =FontWeight.Semibold
+            OnSelect: =Navigate(QMCreateNC, ScreenTransition.None)
 
       - HM_DeferredNote:
           Control: Label
           Properties:
-            Text: ="Quality order and non-conformance creation are planned for a later release."
+            Text: ="Quality order creation is planned for a later release."
             X: =16
             Y: =If(varQueued > 0, 386, 346)
             Width: =Parent.Width - 32
