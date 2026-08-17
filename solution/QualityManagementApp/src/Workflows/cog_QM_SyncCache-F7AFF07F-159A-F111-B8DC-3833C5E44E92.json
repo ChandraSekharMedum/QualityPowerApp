@@ -1,0 +1,167 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "cog_QMConnRef_Dataverse": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cog_QMConnRef_Dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Every_15_minutes": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Minute",
+            "interval": 15
+          }
+        }
+      },
+      "actions": {
+        "List_quality_orders_from_F_and_O": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "mserp_inventqualityorderheaderentities",
+              "$select": "mserp_qualityordernumber,mserp_dataareaid,mserp_itemnumber,mserp_productname,mserp_qualitytestgroupid,mserp_referencetype,mserp_inventoryquantity,mserp_inventorysiteid,mserp_warehouseid,mserp_itembatchnumber,mserp_qualityorderstatus",
+              "$top": 200
+            }
+          }
+        },
+        "Apply_to_each_order": {
+          "runAfter": {
+            "List_quality_orders_from_F_and_O": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@outputs('List_quality_orders_from_F_and_O')?['body/value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Find_cached_order": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "parameters": {
+                  "entityName": "cog_qualityorders",
+                  "$select": "cog_qualityorderid",
+                  "$filter": "@concat('cog_qualityordernumber eq ''', items('Apply_to_each_order')?['mserp_qualityordernumber'], ''' and cog_company eq ''', items('Apply_to_each_order')?['mserp_dataareaid'], '''')",
+                  "$top": 1
+                }
+              }
+            },
+            "Cached_row_exists": {
+              "runAfter": {
+                "Find_cached_order": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "greater": [
+                  "@length(outputs('Find_cached_order')?['body/value'])",
+                  0
+                ]
+              },
+              "actions": {
+                "Update_cached_order": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "cog_QMConnRef_Dataverse",
+                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateRecord"
+                    },
+                    "parameters": {
+                      "entityName": "cog_qualityorders",
+                      "recordId": "@first(outputs('Find_cached_order')?['body/value'])?['cog_qualityorderid']",
+                      "item/cog_itemnumber": "@items('Apply_to_each_order')?['mserp_itemnumber']",
+                      "item/cog_productname": "@items('Apply_to_each_order')?['mserp_productname']",
+                      "item/cog_testgroupid": "@items('Apply_to_each_order')?['mserp_qualitytestgroupid']",
+                      "item/cog_referencetype": "@items('Apply_to_each_order')?['mserp_referencetype']",
+                      "item/cog_inventoryquantity": "@items('Apply_to_each_order')?['mserp_inventoryquantity']",
+                      "item/cog_siteid": "@items('Apply_to_each_order')?['mserp_inventorysiteid']",
+                      "item/cog_warehouseid": "@items('Apply_to_each_order')?['mserp_warehouseid']",
+                      "item/cog_batchnumber": "@items('Apply_to_each_order')?['mserp_itembatchnumber']",
+                      "item/cog_status": "@items('Apply_to_each_order')?['mserp_qualityorderstatus']",
+                      "item/cog_synchronizedon": "@utcNow()"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Create_cached_order": {
+                    "runAfter": {},
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "CreateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "cog_qualityorders",
+                        "item/cog_name": "@items('Apply_to_each_order')?['mserp_qualityordernumber']",
+                        "item/cog_qualityordernumber": "@items('Apply_to_each_order')?['mserp_qualityordernumber']",
+                        "item/cog_company": "@items('Apply_to_each_order')?['mserp_dataareaid']",
+                        "item/cog_itemnumber": "@items('Apply_to_each_order')?['mserp_itemnumber']",
+                        "item/cog_productname": "@items('Apply_to_each_order')?['mserp_productname']",
+                        "item/cog_testgroupid": "@items('Apply_to_each_order')?['mserp_qualitytestgroupid']",
+                        "item/cog_referencetype": "@items('Apply_to_each_order')?['mserp_referencetype']",
+                        "item/cog_inventoryquantity": "@items('Apply_to_each_order')?['mserp_inventoryquantity']",
+                        "item/cog_siteid": "@items('Apply_to_each_order')?['mserp_inventorysiteid']",
+                        "item/cog_warehouseid": "@items('Apply_to_each_order')?['mserp_warehouseid']",
+                        "item/cog_batchnumber": "@items('Apply_to_each_order')?['mserp_itembatchnumber']",
+                        "item/cog_status": "@items('Apply_to_each_order')?['mserp_qualityorderstatus']",
+                        "item/cog_synchronizedon": "@utcNow()"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
