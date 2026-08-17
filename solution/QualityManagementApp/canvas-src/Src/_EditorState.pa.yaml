@@ -1,0 +1,10 @@
+﻿# ************************************************************************************************
+# Screen order for the Quality Management app.
+# ************************************************************************************************
+EditorState:
+  ScreensOrder:
+    - QMHome
+    - QMOrderList
+    - QMResultSheet
+    - QMQueue
+    - Screen1

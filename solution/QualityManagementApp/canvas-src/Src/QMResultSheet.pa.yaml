@@ -1,0 +1,287 @@
+# ************************************************************************************************
+# Quality Management -- Result Sheet (inspection sheet, D-08 / treatment A, D-09)
+#
+# The order arrives in varOrder from QMOrderList.
+#
+# Verdict is computed client-side from the cached tolerance bounds so it works offline, but
+# it is a UX affordance only -- F&O recalculates the stored verdict from the submitted value
+# (proven in Phase 1). Submit never calls F&O directly: it writes a draft sheet, its entries
+# and one outbox row. cog_QM_DrainOutbox picks that up and writes to F&O in ~12 seconds.
+# ************************************************************************************************
+Screens:
+  QMResultSheet:
+    Properties:
+      Fill: =RGBA(244, 246, 247, 1)
+      LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+    Children:
+      - RS_HeaderBar:
+          Control: Label
+          Properties:
+            Text: ="QO " & varOrder.cog_qualityordernumber
+            X: =0
+            Y: =0
+            Width: =Parent.Width
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =18
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =56
+            VerticalAlign: =VerticalAlign.Middle
+
+      - RS_BackButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="<"
+            X: =8
+            Y: =12
+            Width: =40
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =12
+            OnSelect: =Back()
+
+      - RS_Context:
+          Control: Label
+          Properties:
+            Text: |
+              =varOrder.cog_itemnumber & "  -  " & varOrder.cog_productname &
+               If(IsBlank(varOrder.cog_batchnumber), "", "  -  " & varOrder.cog_batchnumber)
+            X: =16
+            Y: =66
+            Width: =Parent.Width - 32
+            Height: =22
+            Size: =10
+            Color: =RGBA(16, 26, 30, 1)
+            FontWeight: =FontWeight.Semibold
+
+      - RS_Chips:
+          Control: Label
+          Properties:
+            Text: |
+              ="Qty " & varOrder.cog_inventoryquantity &
+               "   -   Group " & varOrder.cog_testgroupid &
+               "   -   Site " & varOrder.cog_siteid
+            X: =16
+            Y: =88
+            Width: =Parent.Width - 32
+            Height: =20
+            Size: =9
+            Color: =RGBA(107, 125, 132, 1)
+
+      - RS_GridHeader:
+          Control: Label
+          Properties:
+            Text: ="TEST  /  TOLERANCE"
+            X: =16
+            Y: =116
+            Width: =Parent.Width - 32
+            Height: =26
+            Fill: =RGBA(233, 239, 241, 1)
+            Color: =RGBA(107, 125, 132, 1)
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =10
+            VerticalAlign: =VerticalAlign.Middle
+
+      - RS_TestGallery:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            Items: |
+              =SortByColumns(
+                 Filter('Quality Test Lines (cache)',
+                        cog_qualityordernumber = varOrder.cog_qualityordernumber,
+                        cog_company = varOrder.cog_company),
+                 "cog_testsequence", SortOrder.Ascending)
+            X: =16
+            Y: =142
+            Width: =Parent.Width - 32
+            Height: =Parent.Height - 236
+            TemplateSize: =72
+            TemplatePadding: =0
+            ShowScrollbar: =true
+          Children:
+            - RS_RowFill:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =71
+                  Fill: =RGBA(255, 255, 255, 1)
+
+            - RS_TestName:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.cog_testid
+                  X: =10
+                  Y: =8
+                  Width: =Parent.TemplateWidth - 200
+                  Height: =22
+                  Size: =12
+                  FontWeight: =FontWeight.Semibold
+                  Color: =RGBA(16, 26, 30, 1)
+
+            - RS_Tolerance:
+                Control: Label
+                Properties:
+                  Text: |
+                    =If(ThisItem.cog_upperlimit > ThisItem.cog_lowerlimit,
+                        "Range " & ThisItem.cog_lowerlimit & " - " & ThisItem.cog_upperlimit &
+                          If(IsBlank(ThisItem.cog_testunitid), "", " " & ThisItem.cog_testunitid),
+                        "No numeric range") &
+                     If(IsBlank(ThisItem.cog_testinstrumentid), "",
+                        "  -  " & ThisItem.cog_testinstrumentid)
+                  X: =10
+                  Y: =30
+                  Width: =Parent.TemplateWidth - 200
+                  Height: =20
+                  Size: =9
+                  Color: =RGBA(107, 125, 132, 1)
+
+            - RS_EnteredValue:
+                Control: Classic/TextInput
+                Properties:
+                  Default: =""
+                  HintText: ="value"
+                  X: =Parent.TemplateWidth - 186
+                  Y: =16
+                  Width: =96
+                  Height: =40
+                  Size: =13
+                  Align: =Align.Right
+
+            - RS_Verdict:
+                Control: Label
+                Properties:
+                  Text: |
+                    =If(IsBlank(RS_EnteredValue.Text), "-",
+                        ThisItem.cog_upperlimit > ThisItem.cog_lowerlimit,
+                          If(Value(RS_EnteredValue.Text) >= ThisItem.cog_lowerlimit &&
+                             Value(RS_EnteredValue.Text) <= ThisItem.cog_upperlimit,
+                             "PASS", "FAIL"),
+                        "PASS")
+                  X: =Parent.TemplateWidth - 82
+                  Y: =16
+                  Width: =72
+                  Height: =40
+                  Size: =10
+                  FontWeight: =FontWeight.Semibold
+                  Align: =Align.Center
+                  VerticalAlign: =VerticalAlign.Middle
+                  Color: |
+                    =If(IsBlank(RS_EnteredValue.Text), RGBA(107, 125, 132, 1),
+                        ThisItem.cog_upperlimit > ThisItem.cog_lowerlimit &&
+                        (Value(RS_EnteredValue.Text) < ThisItem.cog_lowerlimit ||
+                         Value(RS_EnteredValue.Text) > ThisItem.cog_upperlimit),
+                          RGBA(156, 31, 23, 1),
+                        RGBA(32, 97, 61, 1))
+                  Fill: |
+                    =If(IsBlank(RS_EnteredValue.Text), RGBA(233, 239, 241, 1),
+                        ThisItem.cog_upperlimit > ThisItem.cog_lowerlimit &&
+                        (Value(RS_EnteredValue.Text) < ThisItem.cog_lowerlimit ||
+                         Value(RS_EnteredValue.Text) > ThisItem.cog_upperlimit),
+                          RGBA(247, 227, 225, 1),
+                        RGBA(222, 238, 228, 1))
+
+            - RS_RowRule:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =71
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
+      - RS_Summary:
+          Control: Label
+          Properties:
+            Text: |
+              =With({ e: CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text))),
+                      f: CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")),
+                      t: CountRows(RS_TestGallery.AllItems) },
+                 If(e = 0, "No results entered  " & t & " tests",
+                    "Order verdict: " & If(f > 0, "Fail", "Pass") &
+                    "  -  " & e & " of " & t & " entered" &
+                    If(f > 0, "  -  " & f & " failing", "")))
+            X: =16
+            Y: =Parent.Height - 88
+            Width: =Parent.Width - 32
+            Height: =32
+            Size: =10
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =10
+            VerticalAlign: =VerticalAlign.Middle
+            Color: |
+              =If(CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")) > 0,
+                  RGBA(156, 31, 23, 1), RGBA(16, 26, 30, 1))
+            Fill: |
+              =If(CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")) > 0,
+                  RGBA(247, 227, 225, 1), RGBA(233, 239, 241, 1))
+
+      - RS_SubmitButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="Save & submit"
+            X: =16
+            Y: =Parent.Height - 48
+            Width: =Parent.Width - 32
+            Height: =40
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =13
+            FontWeight: =FontWeight.Semibold
+            DisplayMode: |
+              =If(CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text))) = 0,
+                  DisplayMode.Disabled, DisplayMode.Edit)
+            OnSelect: |
+              =Set(varCorrelationId, Text(GUID()));
+               Set(varEntered, Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text)));
+               Set(varFailCount, CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")));
+               Set(varSheet,
+                 Patch('Result Sheets (draft)', Defaults('Result Sheets (draft)'),
+                   { cog_name: varOrder.cog_qualityordernumber & " (draft)",
+                     cog_qualityordernumber: varOrder.cog_qualityordernumber,
+                     cog_company: varOrder.cog_company,
+                     cog_sheetstatus: 2,
+                     cog_correlationid: varCorrelationId,
+                     cog_verdict: If(varFailCount > 0, 200000000, 200000001),
+                     cog_startedon: Now(),
+                     cog_completedon: Now() }));
+               ForAll(varEntered As L,
+                 Patch('Result Entries (draft)', Defaults('Result Entries (draft)'),
+                   { cog_name: varOrder.cog_qualityordernumber & " | " & L.cog_testsequence & " | " & L.cog_testid,
+                     cog_testid: L.cog_testid,
+                     cog_testsequence: L.cog_testsequence,
+                     cog_enteredvalue: L.RS_EnteredValue.Text,
+                     cog_computedverdict: If(L.RS_Verdict.Text = "FAIL", 200000000, 200000001),
+                     cog_enteredon: Now(),
+                     cog_ResultSheetId: varSheet }));
+               Patch(Outbox, Defaults(Outbox),
+                 { cog_name: "PostTestResults " & varOrder.cog_qualityordernumber,
+                   cog_operationtype: 1,
+                   cog_correlationid: varCorrelationId,
+                   cog_company: varOrder.cog_company,
+                   cog_outboxstatus: 2,
+                   cog_attempts: 0,
+                   cog_queuedon: Now(),
+                   cog_ResultSheetId: varSheet,
+                   cog_payload:
+                     "{""Operation"":""PostTestResults"",""CorrelationId"":""" & varCorrelationId &
+                     """,""Company"":""" & varOrder.cog_company &
+                     """,""TargetEntity"":""mserp_inventqualityorderlineresultentities"",""Lines"":[" &
+                     Concat(varEntered As L2,
+                       "{""TargetRecordId"":""" & L2.cog_targetrecordid &
+                       """,""TestId"":""" & L2.cog_testid &
+                       """,""TestSequence"":" & L2.cog_testsequence &
+                       ",""ResultValue"":" & Value(L2.RS_EnteredValue.Text) &
+                       ",""TestResult"":" & If(L2.RS_Verdict.Text = "FAIL", 200000000, 200000001) & "}",
+                       ",") &
+                     "]}" });
+               Notify("Submitted  " & CountRows(varEntered) & " result(s) queued", NotificationType.Success);
+               Navigate(QMQueue, ScreenTransition.None)
+

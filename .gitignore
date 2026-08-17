@@ -1,0 +1,21 @@
+# Exported solution zips -- the unpacked source under solution/ is the source of truth.
+# Regenerate with tools/Export-Solution.ps1.
+out/
+*.zip
+
+# Local canvas working copies produced while generating screens
+canvas-work/
+*.msapp
+!solution/**/CanvasApps/*.msapp
+
+# Tool and run output
+**/output/
+**/tasks/
+*.log
+pac-skills/
+
+# Never commit auth material
+*_token.txt
+*refresh*.txt
+browser-session.json
+.env

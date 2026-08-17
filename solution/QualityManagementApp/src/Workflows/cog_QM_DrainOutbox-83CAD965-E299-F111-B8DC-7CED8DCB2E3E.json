@@ -1,0 +1,194 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "cog_QMConnRef_Dataverse": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cog_QMConnRef_Dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_an_outbox_row_is_created": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cog_outbox",
+              "subscriptionRequest/scope": 4
+            }
+          }
+        }
+      },
+      "actions": {
+        "Claim_the_outbox_row": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+              "item/cog_outboxstatus": 3,
+              "item/cog_attempts": 1
+            }
+          }
+        },
+        "Parse_payload": {
+          "runAfter": {
+            "Claim_the_outbox_row": [
+              "Succeeded"
+            ]
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerOutputs()?['body/cog_payload']",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Operation": {
+                  "type": "string"
+                },
+                "CorrelationId": {
+                  "type": "string"
+                },
+                "Company": {
+                  "type": "string"
+                },
+                "TargetEntity": {
+                  "type": "string"
+                },
+                "Lines": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "TargetRecordId": {
+                        "type": "string"
+                      },
+                      "TestId": {
+                        "type": "string"
+                      },
+                      "TestSequence": {
+                        "type": "integer"
+                      },
+                      "ResultValue": {
+                        "type": "number"
+                      },
+                      "TestResult": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Apply_to_each_line": {
+          "runAfter": {
+            "Parse_payload": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Parse_payload')?['Lines']",
+          "actions": {
+            "Update_the_F_and_O_result_line": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord"
+                },
+                "parameters": {
+                  "entityName": "mserp_inventqualityorderlineresultentities",
+                  "recordId": "@items('Apply_to_each_line')?['TargetRecordId']",
+                  "item/mserp_resultvalue": "@items('Apply_to_each_line')?['ResultValue']"
+                }
+              }
+            }
+          }
+        },
+        "Confirm_the_outbox_row": {
+          "runAfter": {
+            "Apply_to_each_line": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+              "item/cog_outboxstatus": 4,
+              "item/cog_processedon": "@utcNow()"
+            }
+          }
+        },
+        "Flag_needs_attention": {
+          "runAfter": {
+            "Apply_to_each_line": [
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+              "item/cog_outboxstatus": 5,
+              "item/cog_lasterror": "@string(result('Apply_to_each_line'))",
+              "item/cog_processedon": "@utcNow()"
+            }
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

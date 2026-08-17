@@ -1,0 +1,182 @@
+# ************************************************************************************************
+# Quality Management -- Quality order list
+#
+# Replaces the V3 manual's dropdown-only selection with a searchable, filterable list.
+# Reads entirely from the Dataverse cache, so it works offline.
+# Status values are F&O's own: 200000000 Open, 200000001 Fail, 200000002 Pass.
+# ************************************************************************************************
+Screens:
+  QMOrderList:
+    Properties:
+      Fill: =RGBA(244, 246, 247, 1)
+      LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+    Children:
+      - OL_HeaderBar:
+          Control: Label
+          Properties:
+            Text: ="Enter Test Results"
+            X: =0
+            Y: =0
+            Width: =Parent.Width
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =18
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =56
+            VerticalAlign: =VerticalAlign.Middle
+
+      - OL_BackButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="<"
+            X: =8
+            Y: =12
+            Width: =40
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =12
+            OnSelect: =Back()
+
+      - OL_Search:
+          Control: Classic/TextInput
+          Properties:
+            Default: =""
+            HintText: ="Search order, item or product"
+            X: =16
+            Y: =70
+            Width: =Parent.Width - 32
+            Height: =44
+            Size: =12
+
+      - OL_FilterOpen:
+          Control: Classic/CheckBox
+          Properties:
+            Text: ="Open only"
+            X: =16
+            Y: =122
+            Width: =140
+            Height: =32
+            Size: =10
+
+      - OL_Count:
+          Control: Label
+          Properties:
+            Text: =CountRows(OL_Gallery.AllItems) & " of " & CountRows('Quality Orders (cache)')
+            X: =Parent.Width - 156
+            Y: =122
+            Width: =140
+            Height: =32
+            Size: =9
+            Color: =RGBA(107, 125, 132, 1)
+            Align: =Align.Right
+            VerticalAlign: =VerticalAlign.Middle
+
+      - OL_Gallery:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            Items: |
+              =SortByColumns(
+                 Filter('Quality Orders (cache)',
+                   (IsBlank(OL_Search.Text) ||
+                     StartsWith(cog_qualityordernumber, OL_Search.Text) ||
+                     StartsWith(cog_itemnumber, OL_Search.Text) ||
+                     StartsWith(cog_productname, OL_Search.Text)) &&
+                   (!OL_FilterOpen.Value || cog_status = 200000000)),
+                 "cog_qualityordernumber", SortOrder.Ascending)
+            X: =16
+            Y: =162
+            Width: =Parent.Width - 32
+            Height: =Parent.Height - 178
+            TemplateSize: =76
+            TemplatePadding: =0
+            ShowScrollbar: =true
+          Children:
+            - OL_RowFill:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =75
+                  Fill: =RGBA(255, 255, 255, 1)
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
+
+            - OL_OrderNo:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.cog_qualityordernumber
+                  X: =12
+                  Y: =10
+                  Width: =120
+                  Height: =22
+                  Size: =13
+                  FontWeight: =FontWeight.Semibold
+                  Color: =RGBA(16, 26, 30, 1)
+
+            - OL_Detail:
+                Control: Label
+                Properties:
+                  Text: |
+                    =ThisItem.cog_itemnumber & "  -  " & ThisItem.cog_productname &
+                     If(IsBlank(ThisItem.cog_batchnumber), "", "  -  " & ThisItem.cog_batchnumber)
+                  X: =12
+                  Y: =34
+                  Width: =Parent.TemplateWidth - 110
+                  Height: =20
+                  Size: =9
+                  Color: =RGBA(107, 125, 132, 1)
+
+            - OL_Meta:
+                Control: Label
+                Properties:
+                  Text: ="Test group " & ThisItem.cog_testgroupid & "  -  site " & ThisItem.cog_siteid
+                  X: =12
+                  Y: =52
+                  Width: =Parent.TemplateWidth - 110
+                  Height: =18
+                  Size: =8
+                  Color: =RGBA(107, 125, 132, 1)
+
+            - OL_Status:
+                Control: Label
+                Properties:
+                  Text: |
+                    =Switch(ThisItem.cog_status,
+                        200000000, "OPEN",
+                        200000001, "FAIL",
+                        200000002, "PASS", "-")
+                  X: =Parent.TemplateWidth - 92
+                  Y: =18
+                  Width: =80
+                  Height: =28
+                  Size: =9
+                  FontWeight: =FontWeight.Semibold
+                  Align: =Align.Center
+                  VerticalAlign: =VerticalAlign.Middle
+                  Color: |
+                    =Switch(ThisItem.cog_status,
+                        200000001, RGBA(156, 31, 23, 1),
+                        200000002, RGBA(32, 97, 61, 1),
+                        RGBA(138, 86, 6, 1))
+                  Fill: |
+                    =Switch(ThisItem.cog_status,
+                        200000001, RGBA(247, 227, 225, 1),
+                        200000002, RGBA(222, 238, 228, 1),
+                        RGBA(248, 235, 214, 1))
+
+            - OL_RowRule:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =75
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
