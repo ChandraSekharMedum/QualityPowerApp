@@ -17,7 +17,10 @@ Screens:
       - RS_HeaderBar:
           Control: Label
           Properties:
-            Text: ="QO " & varOrder.cog_qualityordernumber
+            Text: |
+              =If(IsBlank(varOrder.cog_qualityordernumber),
+                  "No order selected",
+                  "QO " & varOrder.cog_qualityordernumber)
             X: =0
             Y: =0
             Width: =Parent.Width

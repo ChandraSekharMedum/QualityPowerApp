@@ -4,6 +4,12 @@
 # Replaces the V3 manual's dropdown-only selection with a searchable, filterable list.
 # Reads entirely from the Dataverse cache, so it works offline.
 # Status values are F&O's own: 200000000 Open, 200000001 Fail, 200000002 Pass.
+#
+# SELECTION: OnSelect lives on the GALLERY, not on a child control. Children are ordered
+# ascending by ZIndex in this schema, so a row-filling Rectangle sits UNDERNEATH the labels;
+# putting OnSelect there meant clicks on the text were swallowed by the label and only blank
+# space worked. Gallery-level OnSelect fires wherever the row is clicked. The order number is
+# additionally styled and wired as an explicit hyperlink.
 # ************************************************************************************************
 Screens:
   QMOrderList:
@@ -39,7 +45,7 @@ Screens:
             BorderColor: =RGBA(255, 255, 255, 1)
             BorderThickness: =1
             Size: =12
-            OnSelect: =Back()
+            OnSelect: =Navigate(QMHome, ScreenTransition.None)
 
       - OL_Search:
           Control: Classic/TextInput
@@ -75,6 +81,17 @@ Screens:
             Align: =Align.Right
             VerticalAlign: =VerticalAlign.Middle
 
+      - OL_Hint:
+          Control: Label
+          Properties:
+            Text: ="Tap a row, or the order number, to enter results"
+            X: =16
+            Y: =154
+            Width: =Parent.Width - 32
+            Height: =20
+            Size: =8
+            Color: =RGBA(107, 125, 132, 1)
+
       - OL_Gallery:
           Control: Gallery
           Variant: Vertical
@@ -89,12 +106,15 @@ Screens:
                    (!OL_FilterOpen.Value || cog_status = 200000000)),
                  "cog_qualityordernumber", SortOrder.Ascending)
             X: =16
-            Y: =162
+            Y: =178
             Width: =Parent.Width - 32
-            Height: =Parent.Height - 178
+            Height: =Parent.Height - 194
             TemplateSize: =76
             TemplatePadding: =0
             ShowScrollbar: =true
+            OnSelect: |
+              =Set(varOrder, OL_Gallery.Selected);
+               Navigate(QMResultSheet, ScreenTransition.None)
           Children:
             - OL_RowFill:
                 Control: Rectangle
@@ -104,21 +124,22 @@ Screens:
                   Width: =Parent.TemplateWidth
                   Height: =75
                   Fill: =RGBA(255, 255, 255, 1)
-                  OnSelect: |
-                    =Set(varOrder, ThisItem);
-                     Navigate(QMResultSheet, ScreenTransition.None)
 
-            - OL_OrderNo:
+            - OL_OrderLink:
                 Control: Label
                 Properties:
                   Text: =ThisItem.cog_qualityordernumber
                   X: =12
                   Y: =10
-                  Width: =120
-                  Height: =22
+                  Width: =130
+                  Height: =24
                   Size: =13
                   FontWeight: =FontWeight.Semibold
-                  Color: =RGBA(16, 26, 30, 1)
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
 
             - OL_Detail:
                 Control: Label
@@ -128,7 +149,7 @@ Screens:
                      If(IsBlank(ThisItem.cog_batchnumber), "", "  -  " & ThisItem.cog_batchnumber)
                   X: =12
                   Y: =34
-                  Width: =Parent.TemplateWidth - 110
+                  Width: =Parent.TemplateWidth - 130
                   Height: =20
                   Size: =9
                   Color: =RGBA(107, 125, 132, 1)
@@ -136,10 +157,13 @@ Screens:
             - OL_Meta:
                 Control: Label
                 Properties:
-                  Text: ="Test group " & ThisItem.cog_testgroupid & "  -  site " & ThisItem.cog_siteid
+                  Text: |
+                    ="Test group " & ThisItem.cog_testgroupid &
+                     "  -  site " & ThisItem.cog_siteid &
+                     "  -  " & ThisItem.cog_company
                   X: =12
                   Y: =52
-                  Width: =Parent.TemplateWidth - 110
+                  Width: =Parent.TemplateWidth - 130
                   Height: =18
                   Size: =8
                   Color: =RGBA(107, 125, 132, 1)
@@ -152,7 +176,7 @@ Screens:
                         200000000, "OPEN",
                         200000001, "FAIL",
                         200000002, "PASS", "-")
-                  X: =Parent.TemplateWidth - 92
+                  X: =Parent.TemplateWidth - 106
                   Y: =18
                   Width: =80
                   Height: =28
@@ -171,6 +195,19 @@ Screens:
                         200000002, RGBA(222, 238, 228, 1),
                         RGBA(248, 235, 214, 1))
 
+            - OL_Chevron:
+                Control: Label
+                Properties:
+                  Text: =">"
+                  X: =Parent.TemplateWidth - 22
+                  Y: =18
+                  Width: =16
+                  Height: =28
+                  Size: =12
+                  Color: =RGBA(107, 125, 132, 1)
+                  Align: =Align.Center
+                  VerticalAlign: =VerticalAlign.Middle
+
             - OL_RowRule:
                 Control: Rectangle
                 Properties:
@@ -179,4 +216,3 @@ Screens:
                   Width: =Parent.TemplateWidth
                   Height: =1
                   Fill: =RGBA(210, 220, 223, 1)
-
