@@ -1,0 +1,191 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "cog_QMConnRef_Dataverse": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cog_QMConnRef_Dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Every_15_minutes": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Minute",
+            "interval": 15
+          }
+        }
+      },
+      "actions": {
+        "List_test_lines_from_F_and_O": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "mserp_powerappinventqolineentities",
+              "$select": "mserp_qualityorderid,mserp_testid,mserp_testsequence,mserp_dataareaid,mserp_lowerlimit,mserp_upperlimit,mserp_standardvalue,mserp_testinstrumentid,mserp_testunitid,mserp_variableid,mserp_testresult,mserp_pdsorderlineresult",
+              "$top": 500
+            }
+          }
+        },
+        "Apply_to_each_line": {
+          "runAfter": {
+            "List_test_lines_from_F_and_O": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@outputs('List_test_lines_from_F_and_O')?['body/value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Find_the_cached_line": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "parameters": {
+                  "entityName": "cog_qualitytestlines",
+                  "$select": "cog_qualitytestlineid",
+                  "$filter": "@concat('cog_qualityordernumber eq ''', items('Apply_to_each_line')?['mserp_qualityorderid'], ''' and cog_testid eq ''', items('Apply_to_each_line')?['mserp_testid'], ''' and cog_testsequence eq ', string(items('Apply_to_each_line')?['mserp_testsequence']), ' and cog_company eq ''', items('Apply_to_each_line')?['mserp_dataareaid'], '''')",
+                  "$top": 1
+                }
+              }
+            },
+            "Find_the_F_and_O_result_row": {
+              "runAfter": {
+                "Find_the_cached_line": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "parameters": {
+                  "entityName": "mserp_inventqualityorderlineresultentities",
+                  "$select": "mserp_inventqualityorderlineresultentityid",
+                  "$filter": "@concat('mserp_qualityordernumber eq ''', items('Apply_to_each_line')?['mserp_qualityorderid'], ''' and mserp_qualitytestid eq ''', items('Apply_to_each_line')?['mserp_testid'], ''' and mserp_qualityordersequencenumber eq ', string(items('Apply_to_each_line')?['mserp_testsequence']), ' and mserp_dataareaid eq ''', items('Apply_to_each_line')?['mserp_dataareaid'], '''')",
+                  "$top": 1
+                }
+              }
+            },
+            "Cached_line_exists": {
+              "runAfter": {
+                "Find_the_F_and_O_result_row": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "greater": [
+                  "@length(outputs('Find_the_cached_line')?['body/value'])",
+                  0
+                ]
+              },
+              "actions": {
+                "Update_the_cached_line": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "cog_QMConnRef_Dataverse",
+                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "UpdateRecord"
+                    },
+                    "parameters": {
+                      "entityName": "cog_qualitytestlines",
+                      "recordId": "@first(outputs('Find_the_cached_line')?['body/value'])?['cog_qualitytestlineid']",
+                      "item/cog_lowerlimit": "@items('Apply_to_each_line')?['mserp_lowerlimit']",
+                      "item/cog_upperlimit": "@items('Apply_to_each_line')?['mserp_upperlimit']",
+                      "item/cog_standardvalue": "@items('Apply_to_each_line')?['mserp_standardvalue']",
+                      "item/cog_testinstrumentid": "@items('Apply_to_each_line')?['mserp_testinstrumentid']",
+                      "item/cog_testunitid": "@items('Apply_to_each_line')?['mserp_testunitid']",
+                      "item/cog_variableid": "@items('Apply_to_each_line')?['mserp_variableid']",
+                      "item/cog_currentresult": "@items('Apply_to_each_line')?['mserp_testresult']",
+                      "item/cog_currentvalue": "@items('Apply_to_each_line')?['mserp_pdsorderlineresult']",
+                      "item/cog_targetrecordid": "@if(greater(length(outputs('Find_the_F_and_O_result_row')?['body/value']), 0), first(outputs('Find_the_F_and_O_result_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'], '')",
+                      "item/cog_synchronizedon": "@utcNow()"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Create_the_cached_line": {
+                    "runAfter": {},
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "CreateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "cog_qualitytestlines",
+                        "item/cog_name": "@concat(items('Apply_to_each_line')?['mserp_qualityorderid'], ' | ', string(items('Apply_to_each_line')?['mserp_testsequence']), ' | ', items('Apply_to_each_line')?['mserp_testid'])",
+                        "item/cog_qualityordernumber": "@items('Apply_to_each_line')?['mserp_qualityorderid']",
+                        "item/cog_testid": "@items('Apply_to_each_line')?['mserp_testid']",
+                        "item/cog_testsequence": "@items('Apply_to_each_line')?['mserp_testsequence']",
+                        "item/cog_company": "@items('Apply_to_each_line')?['mserp_dataareaid']",
+                        "item/cog_lowerlimit": "@items('Apply_to_each_line')?['mserp_lowerlimit']",
+                        "item/cog_upperlimit": "@items('Apply_to_each_line')?['mserp_upperlimit']",
+                        "item/cog_standardvalue": "@items('Apply_to_each_line')?['mserp_standardvalue']",
+                        "item/cog_testinstrumentid": "@items('Apply_to_each_line')?['mserp_testinstrumentid']",
+                        "item/cog_testunitid": "@items('Apply_to_each_line')?['mserp_testunitid']",
+                        "item/cog_variableid": "@items('Apply_to_each_line')?['mserp_variableid']",
+                        "item/cog_currentresult": "@items('Apply_to_each_line')?['mserp_testresult']",
+                        "item/cog_currentvalue": "@items('Apply_to_each_line')?['mserp_pdsorderlineresult']",
+                        "item/cog_targetrecordid": "@if(greater(length(outputs('Find_the_F_and_O_result_row')?['body/value']), 0), first(outputs('Find_the_F_and_O_result_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'], '')",
+                        "item/cog_synchronizedon": "@utcNow()"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

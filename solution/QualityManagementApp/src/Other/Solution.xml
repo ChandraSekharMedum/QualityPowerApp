@@ -114,6 +114,7 @@
       <RootComponent type="1" schemaName="mserp_powerappswhsinventstatusentity" behavior="1" />
       <RootComponent type="1" schemaName="mserp_powerappswhslicenseplateentity" behavior="1" />
       <RootComponent type="1" schemaName="mserp_powerappswrkctrtableentity" behavior="1" />
+      <RootComponent type="29" id="{66e2784b-209a-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
       <RootComponent type="29" id="{83cad965-e299-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
       <RootComponent type="29" id="{f7aff07f-159a-f111-b8dc-3833c5e44e92}" behavior="0" />
       <RootComponent type="300" schemaName="cog_qualitymanagement_a469f" behavior="0" />
@@ -142,6 +143,12 @@
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>
         <Dependent type="1" schemaName="mserp_inventqualityorderlineentitypowerapp" displayName="Quality order lines (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="29" displayName="cog_QM_SyncTestLines" id="{66e2784b-209a-f111-b8dc-7ced8dcb2e3e}" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
@@ -190,6 +197,12 @@
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>
         <Dependent type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="29" displayName="cog_QM_SyncTestLines" id="{66e2784b-209a-f111-b8dc-7ced8dcb2e3e}" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="mserp_powerappinventsumentity" displayName="On-hand inventory (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
