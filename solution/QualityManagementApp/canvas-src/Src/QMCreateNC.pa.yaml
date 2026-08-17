@@ -678,15 +678,31 @@ Screens:
       - NC_RefInput:
           Control: Classic/TextInput
           Properties:
-            # Goes to mserp_inventrefid. Prefilled with the chosen quality order for an
-            # internal NC, since that is the reference an inspector would write by hand.
+            # Goes to mserp_inventrefid, which is a LOOKUP, not a note field. F&O validates it
+            # against real order numbers: a quality order number is accepted, arbitrary text
+            # gets "The value 'X' in field 'Reference number' is not valid" and the row lands
+            # in ATTENTION. Prefilled from the chosen quality order because that value is
+            # proven valid; anything else the inspector types is at F&O's discretion.
             Default: =varNcOrderNumber
-            HintText: ="purchase order, sales order or quality order number"
+            HintText: ="leave blank unless you have a real order number"
             X: =700
             Y: =324
             Width: =650
             Height: =40
             Size: =11
+
+      - NC_RefNote:
+          Control: Label
+          Properties:
+            Text: |
+              ="F&O checks this against real order numbers and rejects anything it does not " &
+               "recognise. Leave it blank if you are not sure."
+            X: =700
+            Y: =366
+            Width: =650
+            Height: =18
+            Size: =8
+            Color: =RGBA(107, 125, 132, 1)
 
       # ------------------------------------------------------------------ review
       - NC_R3:

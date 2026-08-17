@@ -94,6 +94,36 @@ with `WorkflowOperationParametersExtraParameter`, which is the more honest of th
 
 A quantity input with no unit input is therefore correct, not an omission.
 
+### `mserp_inventrefid` is a lookup wearing a text column's clothes
+
+It looks like a free-text reference. It is not:
+
+```
+RefId = "QO-TEST"   -> 0x80048d0b  The value 'QO-TEST' in field 'Reference number' is not valid
+RefId = "000120"    -> accepted, reads back '000120'      (a real quality order number)
+RefId = ""          -> accepted
+```
+
+Two neighbouring fields are stricter still and reject a quality order number outright:
+`mserp_inventtestinfostatref` ("not found in the related table 'Non conformance'") and
+`mserp_inventtransidref` ("not found in the related table 'Inventory transactions
+originator'").
+
+So the screen prefills Reference from the selected quality order — a value proven valid — and
+tells the inspector F&O validates anything else. **There is no field on this entity that will
+accept arbitrary text**, which is worth knowing before anyone promises the SMEs a comments box.
+
+### End-to-end results through the outbox
+
+| Type | Account | Rush | Reference | Result |
+|---|---|---|---|---|
+| Vendor `200000002` | `US-105` | - | blank | **Confirmed, 15s** |
+| Customer `200000001` | `US-002` | Yes | blank | **Confirmed, 15s** |
+| Internal `200000000` | - | No | `000120` | **Confirmed, 15s** |
+
+`mserp_rush` and `mserp_custaccount` both read back correctly, and F&O set approval to New
+(`200000000`) on each. All probe records were deleted afterwards.
+
 ---
 
 ## 3. Batch disposition — blocked

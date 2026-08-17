@@ -60,6 +60,43 @@ Write-Output ""
 Write-Output "=== 3. swap payload and bump version ==="
 $target = Get-ChildItem "$work\extract\CanvasApps" -Filter '*.msapp' | Select-Object -First 1
 if (-not $target) { throw "No canvas app in the exported solution." }
+
+# GUARD: data sources live in canvas-src\*.msapr, NOT in the .pa.yaml screens, and they can only
+# be added in Studio. So if someone adds a data source in Studio and this script runs without a
+# fresh Export-Solution.ps1 first, the packed .msapp overwrites the live one and the data source
+# disappears -- taking every formula that referenced it with it. Silently.
+#
+# Compare the live app's Dataverse data sources against the packed one and refuse to import if
+# the live app knows about any the local copy does not.
+function Get-MsappDataSourceNames([string]$msappPath) {
+    $names = @()
+    $z = [System.IO.Compression.ZipFile]::OpenRead($msappPath)
+    try {
+        $e = $z.Entries | Where-Object { $_.FullName -replace '\\', '/' -match '(^|/)References/DataSources\.json$' } | Select-Object -First 1
+        if (-not $e) { return $null }   # nothing to compare against
+        $r = New-Object System.IO.StreamReader($e.Open())
+        $j = $r.ReadToEnd(); $r.Close()
+        foreach ($d in ($j | ConvertFrom-Json).DataSources) {
+            if ($d.Type -eq 'NativeCDSDataSourceInfo') { $names += $d.Name }
+        }
+    } finally { $z.Dispose() }
+    return $names
+}
+
+$liveDs   = Get-MsappDataSourceNames $target.FullName
+$packedDs = Get-MsappDataSourceNames $newMsapp
+if ($null -ne $liveDs -and $null -ne $packedDs) {
+    $lost = @($liveDs | Where-Object { $packedDs -notcontains $_ })
+    Write-Output ("  data sources: {0} live, {1} packed" -f @($liveDs).Count, @($packedDs).Count)
+    if ($lost.Count -gt 0) {
+        throw ("This import would DROP " + $lost.Count + " data source(s) the live app uses: " +
+               ($lost -join ', ') + ". Someone added them in Studio. Run tools\Export-Solution.ps1 " +
+               "to pull the refreshed canvas-src (the .msapr carries the data sources), commit it, " +
+               "then publish again.")
+    }
+} else {
+    Write-Output "  data sources: could not be compared -- no References/DataSources.json in one of the packages"
+}
 Write-Output ("  {0}: {1} -> {2} bytes" -f $target.Name, $target.Length, (Get-Item $newMsapp).Length)
 Copy-Item $newMsapp $target.FullName -Force
 
