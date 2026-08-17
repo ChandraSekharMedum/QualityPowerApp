@@ -216,6 +216,35 @@ resolved.**
 
 Both need a Phase 1-style write probe before any UI is worth building.
 
+### Studio validation — passed on the second attempt
+
+The first published build failed to open in Studio with **39 `PA2108` errors**. Two distinct
+bugs, both now fixed and confirmed by the client opening the app cleanly:
+
+**1. Classic versus modern controls.** `Button`, `TextInput` and `Checkbox` all have modern
+counterparts, so an unprefixed `Control:` resolves to the **modern** control — which has no
+`Fill`, `Color`, `Size` or `HintText`. `Label` and `Rectangle` did not error because
+`Rectangle` has no modern version and both resolved classic.
+
+The fix is the namespace prefix the schema pattern allows
+(`^([A-Z][a-zA-Z0-9]*/)?[A-Z][a-zA-Z0-9]*...`):
+
+| Use | Not |
+|---|---|
+| `Control: Classic/Button` | `Control: Button` |
+| `Control: Classic/TextInput` | `Control: TextInput` |
+| `Control: Classic/CheckBox` | `Control: Checkbox` |
+| `Control: Label`, `Control: Rectangle`, `Control: Gallery` | *(fine unprefixed)* |
+
+**2. Encoding.** Repairing the first bug through `Get-Content` / `Out-File` mangled every
+middle-dot separator to `Â·` and the em-dashes to `€` and `"` — PowerShell's cp1252 round
+trip, the same failure the project standard already documents for `.ps1` files. **The
+ASCII-only rule extends to `.pa.yaml`.** `tools/Publish-CanvasApp.ps1` now hard-fails on
+non-ASCII before packing rather than leaving it to be noticed later.
+
+**Still unverified:** the app opens and edits cleanly, but that is a *design-time* check.
+The submit formula has not been exercised at runtime.
+
 ### No static validation available
 
 `pac canvas validate` reports *"no longer supported"* in CLI 2.9.3. `pack` checks YAML
