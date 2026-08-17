@@ -91,22 +91,49 @@ $definition = [ordered]@{
             inputs = [ordered]@{
                 host       = ($dvHost + [ordered]@{ operationId = 'SubscribeWebhookTrigger' })
                 parameters = [ordered]@{
-                    # message 3 = Create OR Update. Create alone meant the Retry button, which
-                    # only sets status back to Queued, never fired the flow.
-                    # The filter makes Update safe: the flow's own writes set 3 then 4, neither
-                    # matches, so it cannot re-trigger itself. Only a row at 2 fires it.
-                    'subscriptionRequest/message'          = 3
-                    'subscriptionRequest/entityname'       = 'cog_outbox'
-                    'subscriptionRequest/scope'            = 4
-                    'subscriptionRequest/filterexpression' = 'cog_outboxstatus eq 2'
+                    # message 1 = Create ONLY. This is the one that demonstrably works here.
+                    #
+                    # message 3 (Create or Update) was tried twice, with and without a
+                    # filterexpression, and behaved as update-only in this environment:
+                    # nudging a row fired the flow, creating one never did. Rather than keep
+                    # fighting it, the queue is now append-only -- Retry CREATES a new outbox
+                    # row rather than re-queuing the old one, which suits the model better
+                    # anyway: every attempt is its own auditable record.
+                    #
+                    # Retry reuses the ORIGINAL correlation id, so the duplicate check does
+                    # the right thing either way. If the first attempt genuinely failed there
+                    # is no confirmed twin and the retry proceeds; if it actually succeeded,
+                    # the retry is rejected as a duplicate instead of writing twice.
+                    'subscriptionRequest/message'    = 1
+                    'subscriptionRequest/entityname' = 'cog_outbox'
+                    'subscriptionRequest/scope'      = 4
                 }
             }
         }
     }
     actions = [ordered]@{
 
+        # Guard. The trigger fires on any create or update of an outbox row, including the
+        # flow's own status writes. Anything not sitting at Queued (2) stops here.
+        Exit_if_not_queued = [ordered]@{
+            runAfter   = [ordered]@{}
+            type       = 'If'
+            expression = [ordered]@{
+                not = [ordered]@{
+                    equals = @("@triggerOutputs()?['body/cog_outboxstatus']", 2)
+                }
+            }
+            actions = [ordered]@{
+                Stop = [ordered]@{
+                    runAfter    = [ordered]@{}
+                    type        = 'Terminate'
+                    inputs      = [ordered]@{ runStatus = 'Succeeded' }
+                }
+            }
+        }
+
         Claim_the_outbox_row = [ordered]@{
-            runAfter = [ordered]@{}
+            runAfter = [ordered]@{ Exit_if_not_queued = @('Succeeded') }
             type     = 'OpenApiConnection'
             inputs   = [ordered]@{
                 host       = ($dvHost + [ordered]@{ operationId = 'UpdateRecord' })
@@ -119,8 +146,61 @@ $definition = [ordered]@{
             }
         }
 
-        Process_the_submission = [ordered]@{
+        # IDEMPOTENCY (R6). Test results are UpdateRecord, so a repeated write is naturally
+        # harmless -- the same value lands twice. What this guards is the same SUBMISSION
+        # being drained more than once: a flow retry after a timeout where the write actually
+        # succeeded, or a row requeued by hand that had already completed.
+        #
+        # The key is cog_correlationid, generated per submission in the app. Two separate
+        # submissions carry different correlations and both process, which is correct -- an
+        # inspector re-entering a result is not a duplicate.
+        Check_for_an_already_confirmed_twin = [ordered]@{
             runAfter = [ordered]@{ Claim_the_outbox_row = @('Succeeded') }
+            type     = 'OpenApiConnection'
+            inputs   = [ordered]@{
+                host       = ($dvHost + [ordered]@{ operationId = 'ListRecords' })
+                parameters = [ordered]@{
+                    entityName = 'cog_outboxes'
+                    '$select'  = 'cog_outboxid,cog_processedon'
+                    '$filter'  = ("@concat('cog_correlationid eq ''', " +
+                                  "triggerOutputs()?['body/cog_correlationid']" +
+                                  ", ''' and cog_outboxstatus eq 4 and cog_outboxid ne ', " +
+                                  "triggerOutputs()?['body/cog_outboxid']" + ")")
+                    '$top'     = 1
+                }
+            }
+        }
+
+        Route_duplicate_or_process = [ordered]@{
+            runAfter = [ordered]@{ Check_for_an_already_confirmed_twin = @('Succeeded') }
+            type     = 'If'
+            expression = [ordered]@{
+                greater = @("@length(outputs('Check_for_an_already_confirmed_twin')?['body/value'])", 0)
+            }
+            actions = [ordered]@{
+                Mark_as_duplicate = [ordered]@{
+                    runAfter = [ordered]@{}
+                    type     = 'OpenApiConnection'
+                    inputs   = [ordered]@{
+                        host       = ($dvHost + [ordered]@{ operationId = 'UpdateRecord' })
+                        parameters = [ordered]@{
+                            entityName              = 'cog_outboxes'
+                            recordId                = "@triggerOutputs()?['body/cog_outboxid']"
+                            'item/cog_outboxstatus' = 6
+                            'item/cog_processedon'  = '@utcNow()'
+                            'item/cog_lasterror'    = ("@concat('Skipped: correlation ', " +
+                                                       "triggerOutputs()?['body/cog_correlationid']" +
+                                                       ", ' was already confirmed at ', " +
+                                                       "string(first(outputs('Check_for_an_already_confirmed_twin')?['body/value'])?['cog_processedon'])" +
+                                                       ")")
+                        }
+                    }
+                }
+            }
+            else = [ordered]@{ actions = [ordered]@{
+
+        Process_the_submission = [ordered]@{
+            runAfter = [ordered]@{}
             type     = 'Scope'
             actions  = [ordered]@{
 
@@ -209,6 +289,9 @@ $definition = [ordered]@{
                     'item/cog_lasterror'    = "@substring(string(result('Process_the_submission')), 0, min(3900, length(string(result('Process_the_submission')))))"
                 }
             }
+        }
+
+            } }
         }
     }
 }

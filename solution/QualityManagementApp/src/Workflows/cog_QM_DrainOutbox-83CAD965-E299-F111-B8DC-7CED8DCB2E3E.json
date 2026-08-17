@@ -35,17 +35,41 @@
               "operationId": "SubscribeWebhookTrigger"
             },
             "parameters": {
-              "subscriptionRequest/message": 3,
+              "subscriptionRequest/message": 1,
               "subscriptionRequest/entityname": "cog_outbox",
-              "subscriptionRequest/scope": 4,
-              "subscriptionRequest/filterexpression": "cog_outboxstatus eq 2"
+              "subscriptionRequest/scope": 4
             }
           }
         }
       },
       "actions": {
-        "Claim_the_outbox_row": {
+        "Exit_if_not_queued": {
           "runAfter": {},
+          "type": "If",
+          "expression": {
+            "not": {
+              "equals": [
+                "@triggerOutputs()?['body/cog_outboxstatus']",
+                2
+              ]
+            }
+          },
+          "actions": {
+            "Stop": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          }
+        },
+        "Claim_the_outbox_row": {
+          "runAfter": {
+            "Exit_if_not_queued": [
+              "Succeeded"
+            ]
+          },
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
@@ -62,186 +86,243 @@
             }
           }
         },
-        "Process_the_submission": {
+        "Check_for_an_already_confirmed_twin": {
           "runAfter": {
             "Claim_the_outbox_row": [
               "Succeeded"
             ]
           },
-          "type": "Scope",
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "$select": "cog_outboxid,cog_processedon",
+              "$filter": "@concat('cog_correlationid eq ''', triggerOutputs()?['body/cog_correlationid'], ''' and cog_outboxstatus eq 4 and cog_outboxid ne ', triggerOutputs()?['body/cog_outboxid'])",
+              "$top": 1
+            }
+          }
+        },
+        "Route_duplicate_or_process": {
+          "runAfter": {
+            "Check_for_an_already_confirmed_twin": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "greater": [
+              "@length(outputs('Check_for_an_already_confirmed_twin')?['body/value'])",
+              0
+            ]
+          },
           "actions": {
-            "Parse_payload": {
+            "Mark_as_duplicate": {
               "runAfter": {},
-              "type": "ParseJson",
+              "type": "OpenApiConnection",
               "inputs": {
-                "content": "@triggerOutputs()?['body/cog_payload']",
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "Operation": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "CorrelationId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "Company": {
-                      "type": "string"
-                    },
-                    "TargetEntity": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "Lines": {
-                      "type": "array",
-                      "items": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord"
+                },
+                "parameters": {
+                  "entityName": "cog_outboxes",
+                  "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                  "item/cog_outboxstatus": 6,
+                  "item/cog_processedon": "@utcNow()",
+                  "item/cog_lasterror": "@concat('Skipped: correlation ', triggerOutputs()?['body/cog_correlationid'], ' was already confirmed at ', string(first(outputs('Check_for_an_already_confirmed_twin')?['body/value'])?['cog_processedon']))"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Process_the_submission": {
+                "runAfter": {},
+                "type": "Scope",
+                "actions": {
+                  "Parse_payload": {
+                    "runAfter": {},
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@triggerOutputs()?['body/cog_payload']",
+                      "schema": {
                         "type": "object",
                         "properties": {
-                          "TargetRecordId": {
+                          "Operation": {
                             "type": [
                               "string",
                               "null"
                             ]
                           },
-                          "QualityOrderNumber": {
+                          "CorrelationId": {
                             "type": [
                               "string",
                               "null"
                             ]
                           },
-                          "TestId": {
+                          "Company": {
                             "type": "string"
                           },
-                          "TestSequence": {
+                          "TargetEntity": {
                             "type": [
-                              "integer",
-                              "string"
-                            ]
-                          },
-                          "ResultValue": {
-                            "type": [
-                              "number",
-                              "string"
-                            ]
-                          },
-                          "TestResult": {
-                            "type": [
-                              "integer",
                               "string",
                               "null"
                             ]
+                          },
+                          "Lines": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "TargetRecordId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "QualityOrderNumber": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "TestId": {
+                                  "type": "string"
+                                },
+                                "TestSequence": {
+                                  "type": [
+                                    "integer",
+                                    "string"
+                                  ]
+                                },
+                                "ResultValue": {
+                                  "type": [
+                                    "number",
+                                    "string"
+                                  ]
+                                },
+                                "TestResult": {
+                                  "type": [
+                                    "integer",
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Apply_to_each_line": {
+                    "runAfter": {
+                      "Parse_payload": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "Foreach",
+                    "foreach": "@body('Parse_payload')?['Lines']",
+                    "actions": {
+                      "Resolve_target_row": {
+                        "runAfter": {},
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "cog_QMConnRef_Dataverse",
+                            "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "ListRecords"
+                          },
+                          "parameters": {
+                            "entityName": "mserp_inventqualityorderlineresultentities",
+                            "$select": "mserp_inventqualityorderlineresultentityid",
+                            "$filter": "@concat('mserp_qualityordernumber eq ''', items('Apply_to_each_line')?['QualityOrderNumber'], ''' and mserp_qualitytestid eq ''', items('Apply_to_each_line')?['TestId'], ''' and mserp_qualityordersequencenumber eq ', string(items('Apply_to_each_line')?['TestSequence']), ' and mserp_dataareaid eq ''', body('Parse_payload')?['Company'], '''')",
+                            "$top": 1
+                          }
+                        }
+                      },
+                      "Update_the_F_and_O_result_line": {
+                        "runAfter": {
+                          "Resolve_target_row": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "cog_QMConnRef_Dataverse",
+                            "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "UpdateRecord"
+                          },
+                          "parameters": {
+                            "entityName": "mserp_inventqualityorderlineresultentities",
+                            "recordId": "@if(not(empty(items('Apply_to_each_line')?['TargetRecordId'])), items('Apply_to_each_line')?['TargetRecordId'], first(outputs('Resolve_target_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'])",
+                            "item/mserp_resultvalue": "@float(items('Apply_to_each_line')?['ResultValue'])"
                           }
                         }
                       }
                     }
                   }
                 }
-              }
-            },
-            "Apply_to_each_line": {
-              "runAfter": {
-                "Parse_payload": [
-                  "Succeeded"
-                ]
               },
-              "type": "Foreach",
-              "foreach": "@body('Parse_payload')?['Lines']",
-              "actions": {
-                "Resolve_target_row": {
-                  "runAfter": {},
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "cog_QMConnRef_Dataverse",
-                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
-                      "operationId": "ListRecords"
-                    },
-                    "parameters": {
-                      "entityName": "mserp_inventqualityorderlineresultentities",
-                      "$select": "mserp_inventqualityorderlineresultentityid",
-                      "$filter": "@concat('mserp_qualityordernumber eq ''', items('Apply_to_each_line')?['QualityOrderNumber'], ''' and mserp_qualitytestid eq ''', items('Apply_to_each_line')?['TestId'], ''' and mserp_qualityordersequencenumber eq ', string(items('Apply_to_each_line')?['TestSequence']), ' and mserp_dataareaid eq ''', body('Parse_payload')?['Company'], '''')",
-                      "$top": 1
-                    }
-                  }
+              "Confirm_the_outbox_row": {
+                "runAfter": {
+                  "Process_the_submission": [
+                    "Succeeded"
+                  ]
                 },
-                "Update_the_F_and_O_result_line": {
-                  "runAfter": {
-                    "Resolve_target_row": [
-                      "Succeeded"
-                    ]
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
                   },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "cog_QMConnRef_Dataverse",
-                      "connectionReferenceName": "cog_QMConnRef_Dataverse",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
-                      "operationId": "UpdateRecord"
-                    },
-                    "parameters": {
-                      "entityName": "mserp_inventqualityorderlineresultentities",
-                      "recordId": "@if(not(empty(items('Apply_to_each_line')?['TargetRecordId'])), items('Apply_to_each_line')?['TargetRecordId'], first(outputs('Resolve_target_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'])",
-                      "item/mserp_resultvalue": "@float(items('Apply_to_each_line')?['ResultValue'])"
-                    }
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 4,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": ""
+                  }
+                }
+              },
+              "Flag_needs_attention": {
+                "runAfter": {
+                  "Process_the_submission": [
+                    "Failed",
+                    "TimedOut",
+                    "Skipped"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 5,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": "@substring(string(result('Process_the_submission')), 0, min(3900, length(string(result('Process_the_submission')))))"
                   }
                 }
               }
-            }
-          }
-        },
-        "Confirm_the_outbox_row": {
-          "runAfter": {
-            "Process_the_submission": [
-              "Succeeded"
-            ]
-          },
-          "type": "OpenApiConnection",
-          "inputs": {
-            "host": {
-              "connectionName": "cog_QMConnRef_Dataverse",
-              "connectionReferenceName": "cog_QMConnRef_Dataverse",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
-              "operationId": "UpdateRecord"
-            },
-            "parameters": {
-              "entityName": "cog_outboxes",
-              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
-              "item/cog_outboxstatus": 4,
-              "item/cog_processedon": "@utcNow()",
-              "item/cog_lasterror": ""
-            }
-          }
-        },
-        "Flag_needs_attention": {
-          "runAfter": {
-            "Process_the_submission": [
-              "Failed",
-              "TimedOut",
-              "Skipped"
-            ]
-          },
-          "type": "OpenApiConnection",
-          "inputs": {
-            "host": {
-              "connectionName": "cog_QMConnRef_Dataverse",
-              "connectionReferenceName": "cog_QMConnRef_Dataverse",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
-              "operationId": "UpdateRecord"
-            },
-            "parameters": {
-              "entityName": "cog_outboxes",
-              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
-              "item/cog_outboxstatus": 5,
-              "item/cog_processedon": "@utcNow()",
-              "item/cog_lasterror": "@substring(string(result('Process_the_submission')), 0, min(3900, length(string(result('Process_the_submission')))))"
             }
           }
         }

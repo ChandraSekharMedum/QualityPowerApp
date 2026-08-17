@@ -6,7 +6,7 @@
 # made in a dead spot just disappears.
 #
 # Status values are the cog_outboxstatus convention from phase2/scripts/schema.ps1:
-#   1 Draft  2 Queued  3 Submitting  4 Confirmed  5 Needs attention
+#   1 Draft  2 Queued  3 Submitting  4 Confirmed  5 Needs attention  6 Duplicate (skipped)
 # ************************************************************************************************
 Screens:
   QMQueue:
@@ -66,7 +66,8 @@ Screens:
               =CountRows(Filter(Outbox, cog_outboxstatus = 2)) & " queued   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 3)) & " submitting   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 4)) & " confirmed   -   " &
-               CountRows(Filter(Outbox, cog_outboxstatus = 5)) & " need attention"
+               CountRows(Filter(Outbox, cog_outboxstatus = 5)) & " need attention   -   " &
+               CountRows(Filter(Outbox, cog_outboxstatus = 6)) & " duplicate"
             X: =16
             Y: =70
             Width: =Parent.Width - 32
@@ -130,7 +131,7 @@ Screens:
                 Control: Label
                 Properties:
                   Text: =If(IsBlank(ThisItem.cog_lasterror), "", Left(ThisItem.cog_lasterror, 90))
-                  Visible: =ThisItem.cog_outboxstatus = 5
+                  Visible: =ThisItem.cog_outboxstatus = 5 || ThisItem.cog_outboxstatus = 6
                   X: =12
                   Y: =54
                   Width: =Parent.TemplateWidth - 24
@@ -147,7 +148,8 @@ Screens:
                         2, "QUEUED",
                         3, "SENDING",
                         4, "CONFIRMED",
-                        5, "ATTENTION", "-")
+                        5, "ATTENTION",
+                        6, "DUPLICATE", "-")
                   X: =Parent.TemplateWidth - 116
                   Y: =20
                   Width: =104
@@ -160,11 +162,13 @@ Screens:
                     =Switch(ThisItem.cog_outboxstatus,
                         4, RGBA(32, 97, 61, 1),
                         5, RGBA(156, 31, 23, 1),
+                        6, RGBA(107, 125, 132, 1),
                         RGBA(138, 86, 6, 1))
                   Fill: |
                     =Switch(ThisItem.cog_outboxstatus,
                         4, RGBA(222, 238, 228, 1),
                         5, RGBA(247, 227, 225, 1),
+                        6, RGBA(233, 239, 241, 1),
                         RGBA(248, 235, 214, 1))
 
             - QQ_Retry:
@@ -179,10 +183,26 @@ Screens:
                   Size: =9
                   Fill: =RGBA(156, 31, 23, 1)
                   Color: =RGBA(255, 255, 255, 1)
+                  # Retry CREATES a new outbox row rather than re-queuing this one. The drain
+                  # flow triggers on create only, and an append-only queue keeps every attempt
+                  # as its own auditable record.
+                  #
+                  # The original correlation id is carried over deliberately: if the first
+                  # attempt actually reached F&O, the duplicate check rejects this one instead
+                  # of writing twice.
                   OnSelect: |
-                    =Patch(Outbox, ThisItem,
-                       { cog_outboxstatus: 2, cog_lasterror: Blank() });
-                     Notify("Requeued", NotificationType.Information)
+                    =Patch(Outbox, Defaults(Outbox),
+                       { cog_name: ThisItem.cog_name,
+                         cog_operationtype: ThisItem.cog_operationtype,
+                         cog_correlationid: ThisItem.cog_correlationid,
+                         cog_company: ThisItem.cog_company,
+                         cog_payload: ThisItem.cog_payload,
+                         cog_outboxstatus: 2,
+                         cog_attempts: 0,
+                         cog_queuedon: Now() });
+                     Patch(Outbox, ThisItem, { cog_lasterror: "Superseded by a retry" });
+                     Notify("Retry queued", NotificationType.Information);
+                     Refresh(Outbox)
 
             - QQ_RowRule:
                 Control: Rectangle
