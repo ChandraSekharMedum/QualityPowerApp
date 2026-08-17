@@ -6,7 +6,7 @@
       <LocalizedName description="Quality Management App" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>0.1.6.0</Version>
+    <Version>0.1.8.0</Version>
     <Managed>2</Managed>
     <Publisher>
       <UniqueName>ColumbusGlobal</UniqueName>
@@ -80,7 +80,9 @@
       </Addresses>
     </Publisher>
     <RootComponents>
+      <RootComponent type="1" schemaName="cog_account" behavior="0" />
       <RootComponent type="1" schemaName="cog_outbox" behavior="0" />
+      <RootComponent type="1" schemaName="cog_problemtype" behavior="0" />
       <RootComponent type="1" schemaName="cog_qualityorder" behavior="0" />
       <RootComponent type="1" schemaName="cog_qualitytestline" behavior="0" />
       <RootComponent type="1" schemaName="cog_resultentry" behavior="0" />
@@ -114,6 +116,7 @@
       <RootComponent type="1" schemaName="mserp_powerappswhsinventstatusentity" behavior="1" />
       <RootComponent type="1" schemaName="mserp_powerappswhslicenseplateentity" behavior="1" />
       <RootComponent type="1" schemaName="mserp_powerappswrkctrtableentity" behavior="1" />
+      <RootComponent type="29" id="{39aafcbc-419a-f111-b8dc-000d3a1b0dc8}" behavior="0" />
       <RootComponent type="29" id="{66e2784b-209a-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
       <RootComponent type="29" id="{83cad965-e299-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
       <RootComponent type="29" id="{f7aff07f-159a-f111-b8dc-3833c5e44e92}" behavior="0" />
@@ -125,6 +128,12 @@
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>
         <Dependent type="1" schemaName="mserp_inventbatchentity" displayName="Batches (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventnonconformancetableentity" displayName="Non conformance (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="29" displayName="cog_QM_DrainNonConformance" id="{39aafcbc-419a-f111-b8dc-000d3a1b0dc8}" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="mserp_inventproblemtypedataentity" displayName="Problem types (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">

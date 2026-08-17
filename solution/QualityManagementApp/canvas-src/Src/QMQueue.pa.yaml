@@ -1,12 +1,10 @@
 # ************************************************************************************************
-# Quality Management -- Submission queue
-#
-# Shows the outbox: what is waiting, what F&O accepted, and what needs attention. This is the
-# screen that makes the offline design legible to an inspector -- without it, a submission
-# made in a dead spot just disappears.
-#
-# Status values are the cog_outboxstatus convention from phase2/scripts/schema.ps1:
-#   1 Draft  2 Queued  3 Submitting  4 Confirmed  5 Needs attention  6 Duplicate (skipped)
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
 # ************************************************************************************************
 Screens:
   QMQueue:
@@ -15,149 +13,119 @@ Screens:
       LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
     Children:
       - QQ_HeaderBar:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="Submission Queue"
-            X: =0
-            Y: =0
-            Width: =Parent.Width
-            Height: =56
-            Fill: =RGBA(13, 98, 115, 1)
             Color: =RGBA(255, 255, 255, 1)
-            Size: =18
+            Fill: =RGBA(13, 98, 115, 1)
             FontWeight: =FontWeight.Semibold
+            Height: =56
             PaddingLeft: =56
-            VerticalAlign: =VerticalAlign.Middle
-
+            Size: =18
+            Text: ="Submission Queue"
+            Width: =Parent.Width
       - QQ_BackButton:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =32
+            OnSelect: =Back()
+            Size: =12
             Text: ="<"
+            Width: =40
             X: =8
             Y: =12
-            Width: =40
-            Height: =32
-            Fill: =RGBA(13, 98, 115, 1)
-            Color: =RGBA(255, 255, 255, 1)
+      - QQ_RefreshButton:
+          Control: Classic/Button@2.2.0
+          Properties:
             BorderColor: =RGBA(255, 255, 255, 1)
             BorderThickness: =1
-            Size: =12
-            OnSelect: =Back()
-
-      - QQ_RefreshButton:
-          Control: Classic/Button
-          Properties:
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =32
+            OnSelect: =Refresh(Outbox)
+            Size: =10
             Text: ="Refresh"
+            Width: =88
             X: =Parent.Width - 96
             Y: =12
-            Width: =88
-            Height: =32
-            Fill: =RGBA(13, 98, 115, 1)
-            Color: =RGBA(255, 255, 255, 1)
-            BorderColor: =RGBA(255, 255, 255, 1)
-            BorderThickness: =1
-            Size: =10
-            OnSelect: =Refresh(Outbox)
-
       - QQ_Summary:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =RGBA(16, 26, 30, 1)
+            Fill: =RGBA(233, 239, 241, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =32
+            PaddingLeft: =10
+            Size: =9
             Text: |
               =CountRows(Filter(Outbox, cog_outboxstatus = 2)) & " queued   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 3)) & " submitting   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 4)) & " confirmed   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 5)) & " need attention   -   " &
                CountRows(Filter(Outbox, cog_outboxstatus = 6)) & " duplicate"
+            Width: =Parent.Width - 32
             X: =16
             Y: =70
-            Width: =Parent.Width - 32
-            Height: =32
-            Fill: =RGBA(233, 239, 241, 1)
-            Color: =RGBA(16, 26, 30, 1)
-            Size: =9
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =10
-            VerticalAlign: =VerticalAlign.Middle
-
       - QQ_Gallery:
-          Control: Gallery
+          Control: Gallery@2.15.0
           Variant: Vertical
           Properties:
+            Height: =Parent.Height - 128
             Items: =SortByColumns(Outbox, "cog_queuedon", SortOrder.Descending)
+            TemplatePadding: =0
+            TemplateSize: =84
+            Width: =Parent.Width - 32
             X: =16
             Y: =112
-            Width: =Parent.Width - 32
-            Height: =Parent.Height - 128
-            TemplateSize: =84
-            TemplatePadding: =0
-            ShowScrollbar: =true
           Children:
             - QQ_RowFill:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  X: =0
-                  Y: =0
-                  Width: =Parent.TemplateWidth
-                  Height: =83
                   Fill: =RGBA(255, 255, 255, 1)
-
+                  Height: =83
+                  Width: =Parent.TemplateWidth
             - QQ_Name:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: =ThisItem.cog_name
-                  X: =12
-                  Y: =10
-                  Width: =Parent.TemplateWidth - 130
+                  Color: =RGBA(16, 26, 30, 1)
+                  FontWeight: =FontWeight.Semibold
                   Height: =22
                   Size: =12
-                  FontWeight: =FontWeight.Semibold
-                  Color: =RGBA(16, 26, 30, 1)
-
+                  Text: =ThisItem.cog_name
+                  Width: =Parent.TemplateWidth - 130
+                  X: =12
+                  Y: =10
             - QQ_Meta:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
+                  Color: =RGBA(107, 125, 132, 1)
+                  Height: =20
+                  Size: =9
                   Text: |
                     =Text(ThisItem.cog_queuedon, "dd mmm hh:mm") &
                      "  -  " & ThisItem.cog_company &
                      If(ThisItem.cog_attempts > 0, "  -  attempt " & ThisItem.cog_attempts, "")
+                  Width: =Parent.TemplateWidth - 130
                   X: =12
                   Y: =34
-                  Width: =Parent.TemplateWidth - 130
-                  Height: =20
-                  Size: =9
-                  Color: =RGBA(107, 125, 132, 1)
-
             - QQ_Error:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: =If(IsBlank(ThisItem.cog_lasterror), "", Left(ThisItem.cog_lasterror, 90))
-                  Visible: =ThisItem.cog_outboxstatus = 5 || ThisItem.cog_outboxstatus = 6
-                  X: =12
-                  Y: =54
-                  Width: =Parent.TemplateWidth - 24
+                  Color: =RGBA(156, 31, 23, 1)
                   Height: =20
                   Size: =8
-                  Color: =RGBA(156, 31, 23, 1)
-
+                  Text: =If(IsBlank(ThisItem.cog_lasterror), "", Left(ThisItem.cog_lasterror, 90))
+                  Visible: =ThisItem.cog_outboxstatus = 5 || ThisItem.cog_outboxstatus = 6
+                  Width: =Parent.TemplateWidth - 24
+                  X: =12
+                  Y: =54
             - QQ_Status:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: |
-                    =Switch(ThisItem.cog_outboxstatus,
-                        1, "DRAFT",
-                        2, "QUEUED",
-                        3, "SENDING",
-                        4, "CONFIRMED",
-                        5, "ATTENTION",
-                        6, "DUPLICATE", "-")
-                  X: =Parent.TemplateWidth - 116
-                  Y: =20
-                  Width: =104
-                  Height: =28
-                  Size: =9
-                  FontWeight: =FontWeight.Semibold
                   Align: =Align.Center
-                  VerticalAlign: =VerticalAlign.Middle
                   Color: |
                     =Switch(ThisItem.cog_outboxstatus,
                         4, RGBA(32, 97, 61, 1),
@@ -170,26 +138,26 @@ Screens:
                         5, RGBA(247, 227, 225, 1),
                         6, RGBA(233, 239, 241, 1),
                         RGBA(248, 235, 214, 1))
-
-            - QQ_Retry:
-                Control: Classic/Button
-                Properties:
-                  Text: ="Retry"
-                  Visible: =ThisItem.cog_outboxstatus = 5
-                  X: =Parent.TemplateWidth - 116
-                  Y: =50
-                  Width: =104
-                  Height: =26
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
                   Size: =9
-                  Fill: =RGBA(156, 31, 23, 1)
+                  Text: |
+                    =Switch(ThisItem.cog_outboxstatus,
+                        1, "DRAFT",
+                        2, "QUEUED",
+                        3, "SENDING",
+                        4, "CONFIRMED",
+                        5, "ATTENTION",
+                        6, "DUPLICATE", "-")
+                  Width: =104
+                  X: =Parent.TemplateWidth - 116
+                  Y: =20
+            - QQ_Retry:
+                Control: Classic/Button@2.2.0
+                Properties:
                   Color: =RGBA(255, 255, 255, 1)
-                  # Retry CREATES a new outbox row rather than re-queuing this one. The drain
-                  # flow triggers on create only, and an append-only queue keeps every attempt
-                  # as its own auditable record.
-                  #
-                  # The original correlation id is carried over deliberately: if the first
-                  # attempt actually reached F&O, the duplicate check rejects this one instead
-                  # of writing twice.
+                  Fill: =RGBA(156, 31, 23, 1)
+                  Height: =26
                   OnSelect: |
                     =Patch(Outbox, Defaults(Outbox),
                        { cog_name: ThisItem.cog_name,
@@ -203,13 +171,16 @@ Screens:
                      Patch(Outbox, ThisItem, { cog_lasterror: "Superseded by a retry" });
                      Notify("Retry queued", NotificationType.Information);
                      Refresh(Outbox)
-
+                  Size: =9
+                  Text: ="Retry"
+                  Visible: =ThisItem.cog_outboxstatus = 5
+                  Width: =104
+                  X: =Parent.TemplateWidth - 116
+                  Y: =50
             - QQ_RowRule:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  X: =0
-                  Y: =83
-                  Width: =Parent.TemplateWidth
-                  Height: =1
                   Fill: =RGBA(210, 220, 223, 1)
-
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =83

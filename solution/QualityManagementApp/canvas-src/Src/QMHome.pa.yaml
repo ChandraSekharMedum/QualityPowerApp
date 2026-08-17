@@ -1,14 +1,10 @@
 # ************************************************************************************************
-# Quality Management -- Home
-# Visual treatment A "Instrument" (D-09).
-#
-# Quality order creation stays deferred: the Owner-dimension defect on the virtual entity path
-# blocks it and the quality entities are not exposed to the F&O connector. The tile is shown
-# but disabled so the intent is visible without offering a dead action.
-#
-# Non-conformance creation is NOT deferred any more. Phase 1 concluded it was impossible, but
-# that test only used POWERAPPSINVENTNONCONFORMATIONENTITY; the base entity accepts creates for
-# Internal, Customer and Vendor. See docs/WRITE-PROBE-RESULTS.md.
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
 # ************************************************************************************************
 Screens:
   QMHome:
@@ -20,127 +16,106 @@ Screens:
          Set(varOpenOrders, CountRows(Filter('Quality Orders (cache)', cog_status = 200000000)))
     Children:
       - HM_HeaderBar:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="Quality Management"
-            X: =0
-            Y: =0
-            Width: =Parent.Width
-            Height: =56
-            Fill: =RGBA(13, 98, 115, 1)
             Color: =RGBA(255, 255, 255, 1)
-            Size: =18
+            Fill: =RGBA(13, 98, 115, 1)
             FontWeight: =FontWeight.Semibold
+            Height: =56
             PaddingLeft: =16
-            VerticalAlign: =VerticalAlign.Middle
-
+            Size: =18
+            Text: ="Quality Management"
+            Width: =Parent.Width
       - HM_SyncStrip:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =28
+            PaddingLeft: =16
+            Size: =9
             Text: |
               =If(Connection.Connected,
                   "Online  -  " & CountRows('Quality Orders (cache)') & " orders cached",
                   "Offline  -  working from cache")
-            X: =0
-            Y: =56
             Width: =Parent.Width
-            Height: =28
-            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
-            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
-            Size: =9
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =16
-            VerticalAlign: =VerticalAlign.Middle
-
+            Y: =56
       - HM_QueueBanner:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =RGBA(138, 86, 6, 1)
+            Fill: =RGBA(248, 235, 214, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =36
+            OnSelect: =Navigate(QMQueue, ScreenTransition.Cover)
+            PaddingLeft: =12
+            Size: =10
             Text: =varQueued & " item(s) waiting to submit  -  tap to view"
+            Visible: =varQueued > 0
+            Width: =Parent.Width - 32
             X: =16
             Y: =96
-            Width: =Parent.Width - 32
-            Height: =36
-            Visible: =varQueued > 0
-            Fill: =RGBA(248, 235, 214, 1)
-            Color: =RGBA(138, 86, 6, 1)
-            Size: =10
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =12
-            VerticalAlign: =VerticalAlign.Middle
-            OnSelect: =Navigate(QMQueue, ScreenTransition.Cover)
-
       - HM_Tile_Results:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
+            BorderColor: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(13, 98, 115, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =110
+            OnSelect: =Navigate(QMOrderList, ScreenTransition.None)
+            Size: =12
             Text: ="Enter Test Results" & Char(10) & varOpenOrders & " open"
+            Width: =(Parent.Width - 44) / 2
             X: =16
             Y: =If(varQueued > 0, 144, 104)
-            Width: =(Parent.Width - 44) / 2
-            Height: =110
-            Fill: =RGBA(255, 255, 255, 1)
-            Color: =RGBA(13, 98, 115, 1)
-            BorderColor: =RGBA(13, 98, 115, 1)
-            BorderThickness: =2
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            OnSelect: =Navigate(QMOrderList, ScreenTransition.None)
-
       - HM_Tile_Queue:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
+            BorderColor: =RGBA(210, 220, 223, 1)
+            Color: =RGBA(13, 98, 115, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =110
+            OnSelect: =Navigate(QMQueue, ScreenTransition.None)
+            Size: =12
             Text: ="Submission Queue" & Char(10) & varQueued & " pending"
+            Width: =(Parent.Width - 44) / 2
             X: =Parent.Width / 2 + 6
             Y: =If(varQueued > 0, 144, 104)
-            Width: =(Parent.Width - 44) / 2
-            Height: =110
-            Fill: =RGBA(255, 255, 255, 1)
-            Color: =RGBA(13, 98, 115, 1)
-            BorderColor: =RGBA(210, 220, 223, 1)
-            BorderThickness: =2
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            OnSelect: =Navigate(QMQueue, ScreenTransition.None)
-
       - HM_Tile_QualityOrder:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
-            Text: ="Quality Order" & Char(10) & "later release"
-            X: =16
-            Y: =If(varQueued > 0, 266, 226)
-            Width: =(Parent.Width - 44) / 2
-            Height: =110
-            Fill: =RGBA(233, 239, 241, 1)
-            Color: =RGBA(107, 125, 132, 1)
             BorderColor: =RGBA(210, 220, 223, 1)
             BorderThickness: =1
-            Size: =12
+            Color: =RGBA(107, 125, 132, 1)
             DisplayMode: =DisplayMode.Disabled
-
+            Fill: =RGBA(233, 239, 241, 1)
+            Height: =110
+            Size: =12
+            Text: ="Quality Order" & Char(10) & "later release"
+            Width: =(Parent.Width - 44) / 2
+            X: =16
+            Y: =If(varQueued > 0, 266, 226)
       - HM_Tile_NC:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
+            BorderColor: =RGBA(210, 220, 223, 1)
+            Color: =RGBA(13, 98, 115, 1)
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =110
+            OnSelect: =Navigate(QMCreateNC, ScreenTransition.None)
+            Size: =12
             Text: ="Create NC" & Char(10) & "internal, customer, vendor"
+            Width: =(Parent.Width - 44) / 2
             X: =Parent.Width / 2 + 6
             Y: =If(varQueued > 0, 266, 226)
-            Width: =(Parent.Width - 44) / 2
-            Height: =110
-            Fill: =RGBA(255, 255, 255, 1)
-            Color: =RGBA(13, 98, 115, 1)
-            BorderColor: =RGBA(210, 220, 223, 1)
-            BorderThickness: =2
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            OnSelect: =Navigate(QMCreateNC, ScreenTransition.None)
-
       - HM_DeferredNote:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="Quality order creation is planned for a later release."
-            X: =16
-            Y: =If(varQueued > 0, 386, 346)
-            Width: =Parent.Width - 32
+            Color: =RGBA(107, 125, 132, 1)
             Height: =32
             Size: =9
-            Color: =RGBA(107, 125, 132, 1)
-            VerticalAlign: =VerticalAlign.Middle
-
+            Text: ="Quality order creation is planned for a later release."
+            Width: =Parent.Width - 32
+            X: =16
+            Y: =If(varQueued > 0, 386, 346)
