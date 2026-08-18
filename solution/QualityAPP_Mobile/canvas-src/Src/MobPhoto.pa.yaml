@@ -225,7 +225,13 @@ Screens:
       - MP_AttachButton:
           Control: Classic/Button
           Properties:
-            Text: =If(varSending, "Sending...", "Send to F&O")
+            # A disabled button that says "Send to F&O" just looks broken -- the user clicks and
+            # nothing happens. Say why instead.
+            Text: |
+              =If(varSending, "Sending...",
+                  !varLineSelected, "Pick a test first - go back",
+                  IsBlank(varB64), "Add a picture first",
+                  "Send to F&O")
             X: =12
             Y: =974
             Width: =Parent.Width - 24
@@ -283,8 +289,8 @@ Screens:
           Control: Label
           Properties:
             Text: |
-              ="The photo goes to F&O as soon as you send it. If it is not on the quality order " &
-               "straight away, refresh the page in F&O."
+              ="A photo must belong to a test line. F&O processes those within seconds; one sent " &
+               "without a test line is never picked up at all. Proven by probe, 2026-08-18."
             X: =12
             Y: =1038
             Width: =Parent.Width - 24
