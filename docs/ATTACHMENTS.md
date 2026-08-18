@@ -27,7 +27,10 @@ POST mserp_powerappfilesavingentities
 -> 201, read back with every field intact including the payload
 ```
 
-`mserp_formname` caps at **20 characters**. `InventQualityOrder` is 18 and is accepted.
+`mserp_formname` caps at **20 characters**. `InventQualityOrder` is 18 and is accepted — but
+"accepted" turned out to mean only that the row was stored. **It must be `Quality`** for the file
+to actually attach; see §2a. Reading the 20-character cap as the only constraint on this field
+cost a full round of testing.
 
 ---
 
@@ -52,10 +55,44 @@ for the exception, not the rule.
 
 ---
 
-## 3. Staged rows disappear after ~13.5 minutes — but that is NOT the attachment appearing
+## 2a. PROVEN 2026-08-18 — what F&O actually requires
 
-**Corrected 2026-08-18.** This section previously claimed F&O attaches photos on a ~15 minute job.
-That was a misreading and it reached the app's on-screen text before being caught.
+Four staging rows created together, identical but for the fields under test, then checked by eye
+in the F&O client on QO 000219:
+
+| | `FormName` | `TableRefId` | Test line | Consumed | **Attached in F&O** |
+|---|---|---|---|---|---|
+| A | `Quality` | `0000` | yes | seconds | **YES** |
+| B | `Quality` | `000219` | yes | seconds | **YES** |
+| C | `InventQualityOrder` | `0000` | yes | seconds | **NO** |
+| D | `Quality` | `0000` | **no** | never | NO |
+
+**Two independent requirements, and each was found the hard way:**
+
+1. **The row must identify a test line** (`TestId` + `TestSequence` + `LineNum`). Without one F&O
+   never picks the row up at all — D sat unprocessed indefinitely. There is no whole-order photo.
+2. **`FormName` must be `Quality`.** C was consumed just like A and B, and produced no attachment.
+
+`TableRefId` is irrelevant — `0000` and a real order number behave identically. Both apps send
+`0000`.
+
+### Consumption is a misleading signal in both directions
+
+- A row disappearing does **not** mean the file was attached (C disappeared and attached nothing).
+- A row lingering does **not** mean processing is pending (D was going nowhere).
+
+Rows F&O can act on are processed in **seconds**. Anything slower means it is not going to happen.
+This is the single most misread signal in this whole feature — see §3.
+
+---
+
+## 3. The "13.5 minute delay" was a misreading, twice
+
+**Corrected twice.** This section first claimed F&O attaches photos on a ~15 minute job. That was
+wrong and reached the app's on-screen text. It was then over-corrected to "attachment is
+immediate" on a single report from a different environment, which was also wrong. §2a settles it
+with a controlled probe: rows F&O can act on are processed in seconds, and rows it cannot are
+never processed at all.
 
 What was actually measured: a probe row was created and polled every 30 seconds.
 
@@ -68,9 +105,9 @@ The row disappearing is the **staging row being cleaned up**. That is a differen
 attachment being created, and nothing in the measurement links the two. The write itself returns
 in about a second.
 
-**The attachment is created immediately.** The demo app in `usdemo01` writes to this same entity
-and its attachments show up straight away — reported by the user after testing it. So F&O
-processes the insert synchronously and merely tidies the staging row later.
+**What is actually true** (§2a): a row F&O can act on is processed within seconds. A row it cannot
+place — no test line — is never picked up, and the disappearance seen at ~13.5 minutes was
+routine tidying of rows that were going nowhere.
 
 Two things that remain true regardless:
 
@@ -84,18 +121,16 @@ completed*. Do not put an inferred timing in front of a user as if it were measu
 
 ---
 
-## 4. Still unverified — needs one human check
+## 4. CONFIRMED — F&O renders these as attachments
 
-**Whether F&O renders these as document attachments on the quality order.** There is no
-`DocuRefEntity`, `DocuValueEntity` or `DocumentAttachmentEntity` in the catalogue — all four
-candidate names 404 — so this cannot be confirmed over OData by any means available.
+**2026-08-18.** `PROBE-A` and `PROBE-B` were both seen on QO 000219 in the F&O client. `PROBE-C`
+was not. So the feature works end to end with the settings in §2a.
 
-The evidence is strong but indirect: the write is accepted, the payload persists, and the staging
-row is later cleaned up — which is what a staging entity does once it has been processed.
-
-The strongest evidence is external: the demo app in `usdemo01` writes to this same entity and its
-attachments appear on the record immediately. Whether our writes land the same way still wants one
-visual check in the F&O client.
+This could never be confirmed over OData: there is no `DocuRefEntity`, `DocuValueEntity` or
+`DocumentAttachmentEntity` in the catalogue — all four candidate names 404. Every automated signal
+available (write accepted, payload persisted, staging row consumed) was present for `PROBE-C` too,
+and `PROBE-C` attached nothing. **A human looking at the record was the only way to tell the
+difference**, and no amount of further probing would have substituted for it.
 
 ---
 
