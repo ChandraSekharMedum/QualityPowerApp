@@ -70,13 +70,53 @@ every field the demo writes reports `IsValidForCreate = True`, including:
 | `mserp_inventoryquantity`, `mserp_inventorystatusid`, `mserp_referenceinventorylotid` | True |
 | `mserp_qualitytestgroupid`, `mserp_referencetype`, `mserp_inventrefid`, `mserp_productname` | True |
 
-So the hypothesis is concrete: **the Owner-dimension failure may simply have been a missing
-`InventDimensionId`.** One create against that entity with `mserp_inventdimensionid = 'AllBlank'`
-settles it. Not run yet — quality order creation was explicitly deferred as an upgrade, and a
-successful create leaves a real order in the sandbox.
+### PROBED 2026-08-18 — quality order creation WORKS, and the diagnosis was wrong
 
-Note they pass the quality order number themselves rather than letting F&O assign it, and they
-read it back with `Last(QualityOrderHeaders).'Quality order'`.
+Three creates succeeded against `mserp_inventqualityorderheaderentities` in `cus-con-sandbox`:
+
+```
+ARM A  no Dimension number            -> CREATED QO 000274
+ARM B  Dimension number = "AllBlank"  -> CREATED QO 000276
+ARM C  Dimension number = "000605"    -> CREATED QO 000278
+```
+
+**Arm A succeeded without any dimension number at all**, so `AllBlank` was not the missing
+ingredient either. The real blockers were two ordinary things:
+
+1. **Do not supply the quality order number.** Passing one gives
+   `Field 'Quality order' does not allow editing; Invalid specification of Quality order;
+   Number sequence Inve_172 does not allow change to a higher number.`
+   F&O assigns it from the number sequence and returns it on the created record.
+2. **The reference must be real.** `Reference type` + `Reference number` + `Reference lot` have
+   to point at an actual source line with inventory. Getting this wrong produces honest errors:
+   `The value '000026' in field 'Reference number' is not found in the related table 'Purchase
+   order lines'` and `No quantity available for item A0001`.
+
+The successful payload cloned the reference of an existing open order:
+
+```
+mserp_itemnumber              A0001
+mserp_inventorysiteid         2
+mserp_warehouseid             24
+mserp_inventoryquantity       1
+mserp_qualitytestgroupid      Impedance
+mserp_referencetype           200000002        (Purchase)
+mserp_inventrefid             00000175         (the purchase order)
+mserp_referenceinventorylotid 478937           (the inventory lot)
+mserp_inventorystatusid       Available
+mserp_dataareaid              usmf
+```
+
+**F&O generated the test lines itself** — each order came back with its `impedance measure`
+line at sequence 10, `resultlinenumber` 1. That confirms the domain rule: the header creates the
+lines from the test group.
+
+All three probe orders were deleted afterwards; deletion works.
+
+**So the Phase 1 conclusion that quality order creation is blocked by an Owner-dimension defect
+is wrong.** It is buildable. What it needs is a source-document picker — the user chooses a
+purchase order line, production order or inventory lot that actually has stock — which is
+exactly what the demo app's four QO screens are for.
 
 ---
 
