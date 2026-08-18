@@ -89,8 +89,8 @@ Screens:
           Control: Label
           Properties:
             Text: |
-              =varQO.mserp_itemnumber &
-               If(IsBlank(varQO.mserp_productname), "", "  -  " & varQO.mserp_productname)
+              =Trim(varQO.mserp_itemnumber) &
+               If(IsBlank(varQO.mserp_productname), "", "  -  " & Trim(varQO.mserp_productname))
             X: =12
             Y: =64
             Width: =Parent.Width - 24
@@ -104,8 +104,8 @@ Screens:
           Control: Label
           Properties:
             Text: |
-              =Upper(varQO.mserp_dataareaid) &
-               "   -   group " & varQO.mserp_qualitytestgroupid &
+              =Upper(Trim(varQO.mserp_dataareaid)) &
+               "   -   group " & Trim(varQO.mserp_qualitytestgroupid) &
                "   -   qty " & varQO.mserp_inventoryquantity
             X: =12
             Y: =88
