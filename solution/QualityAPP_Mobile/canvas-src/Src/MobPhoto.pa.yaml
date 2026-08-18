@@ -119,11 +119,15 @@ Screens:
             Width: =Parent.Width - 24
             Height: =330
             Size: =15
-            # JSON(...IncludeBinaryData) renders the photo as a quoted data URI. Strip only the
-            # quotes -- the "data:image/...;base64," prefix stays, matching the demo app.
+            # ENCODE THE IMAGE CONTROL, NOT THE MEDIA. JSON(MP_AddMedia.Media, IncludeBinaryData)
+            # returns a blob REFERENCE (appres://blobmanager/...), roughly 40 characters, which F&O
+            # rejects with "The string is not a valid base 64 encoded string" -- and the size
+            # readout showed 0 KB, which is the tell. Routing the media through an Image control
+            # first is what makes IncludeBinaryData actually inline the bytes. The demo app does
+            # exactly this: PreviewImage.Image = AddMediaButton1.Media, then JSON(PreviewImage.Image).
             OnChange: |
               =Set(varPhoto, MP_AddMedia.Media);
-               Set(varB64, Substitute(JSON(MP_AddMedia.Media, JSONFormat.IncludeBinaryData), """", ""))
+               Set(varB64, Substitute(JSON(MP_Preview.Image, JSONFormat.IncludeBinaryData), """", ""))
 
       - MP_UseButton:
           Control: Classic/Button
@@ -137,12 +141,10 @@ Screens:
             Color: =RGBA(255, 255, 255, 1)
             Size: =14
             FontWeight: =FontWeight.Semibold
-            # Deliberate belt and braces: if the control's OnChange does not fire, the size
-            # readout stays blank but this still loads the bytes, and the attach reads the
-            # control directly anyway.
+            # Belt and braces if OnChange does not fire. Encodes the Image control, as above.
             OnSelect: |
               =Set(varPhoto, MP_AddMedia.Media);
-               Set(varB64, Substitute(JSON(MP_AddMedia.Media, JSONFormat.IncludeBinaryData), """", ""))
+               Set(varB64, Substitute(JSON(MP_Preview.Image, JSONFormat.IncludeBinaryData), """", ""))
 
       - MP_DiscardButton:
           Control: Classic/Button
@@ -189,10 +191,11 @@ Screens:
       - MP_Preview:
           Control: Image
           Properties:
-            # Bound to the control, not to varPhoto, so the preview shows the real selection even
-            # if the variable was never set.
+            # Always visible, and bound straight to the control. This is not just a preview: it is
+            # the thing that gets encoded, so it must be live before varB64 is computed. Gating it
+            # on varB64 would be circular. With no media it paints nothing and the hint shows.
             Image: =MP_AddMedia.Media
-            Visible: =!IsBlank(varB64)
+            Visible: =true
             X: =12
             Y: =548
             Width: =Parent.Width - 24
@@ -214,12 +217,16 @@ Screens:
       - MP_SizeNote:
           Control: Label
           Properties:
+            # The StartsWith check catches a blob reference being mistaken for image data. Without
+            # it the screen cheerfully reported "Ready: 0 KB" and F&O rejected the send.
             Text: |
               =If(IsBlank(varB64),
                   "No photo chosen yet. Tap Add picture above.",
+                  !StartsWith(varB64, "data:"),
+                    "Photo not readable yet - tap Use this photo.",
                   Len(varB64) > 1048576,
                     "Too large: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
-                    " KB. F&O accepts 1024 KB. Retake it further back.",
+                    " KB. F&O accepts 1024 KB. Pick a smaller photo.",
                   "Ready: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
                   " KB, inside the 1024 KB F&O limit.")
             X: =12
@@ -233,10 +240,12 @@ Screens:
             VerticalAlign: =VerticalAlign.Middle
             Color: |
               =If(IsBlank(varB64), RGBA(107, 125, 132, 1),
+                  !StartsWith(varB64, "data:"), RGBA(138, 86, 6, 1),
                   Len(varB64) > 1048576, RGBA(156, 31, 23, 1),
                   RGBA(32, 97, 61, 1))
             Fill: |
               =If(IsBlank(varB64), RGBA(233, 239, 241, 1),
+                  !StartsWith(varB64, "data:"), RGBA(248, 235, 214, 1),
                   Len(varB64) > 1048576, RGBA(247, 227, 225, 1),
                   RGBA(222, 238, 228, 1))
 
@@ -255,6 +264,7 @@ Screens:
             DisplayMode: |
               =If(varSending ||
                   IsBlank(varB64) ||
+                  !StartsWith(varB64, "data:") ||
                   Len(varB64) > 1048576 ||
                   IsBlank(MP_FileName.Text) ||
                   IsBlank(varQO.mserp_qualityordernumber),
