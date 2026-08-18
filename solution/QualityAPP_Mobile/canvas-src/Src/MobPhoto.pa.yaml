@@ -104,23 +104,31 @@ Screens:
             Size: =10
             Color: =RGBA(107, 125, 132, 1)
 
-      - MP_Camera:
-          Control: Camera
+      # The live Camera control did not work on the device. The demo app in usdemo01 uses the
+      # ADD PICTURE control instead -- 'AddMediaButton1 As addMedia' in its source -- and that is
+      # confirmed working, so this mirrors it. On a phone it opens the device camera or gallery,
+      # which also sidesteps camera permissions in the browser.
+      #
+      # Named without a Classic/ prefix on the same reasoning as Camera: the prefix appears where
+      # a modern counterpart exists (Button, TextInput, CheckBox), and Add picture has none.
+      - MP_AddMedia:
+          Control: AddMedia
           Properties:
             X: =12
             Y: =144
             Width: =Parent.Width - 24
             Height: =330
+            Size: =15
             # JSON(...IncludeBinaryData) renders the photo as a quoted data URI. Strip only the
             # quotes -- the "data:image/...;base64," prefix stays, matching the demo app.
-            OnSelect: |
-              =Set(varPhoto, MP_Camera.Photo);
-               Set(varB64, Substitute(JSON(MP_Camera.Photo, JSONFormat.IncludeBinaryData), """", ""))
+            OnChange: |
+              =Set(varPhoto, MP_AddMedia.Media);
+               Set(varB64, Substitute(JSON(MP_AddMedia.Media, JSONFormat.IncludeBinaryData), """", ""))
 
-      - MP_CaptureButton:
+      - MP_UseButton:
           Control: Classic/Button
           Properties:
-            Text: ="Capture"
+            Text: ="Use this photo"
             X: =12
             Y: =484
             Width: =(Parent.Width - 36) / 2
@@ -129,9 +137,12 @@ Screens:
             Color: =RGBA(255, 255, 255, 1)
             Size: =14
             FontWeight: =FontWeight.Semibold
+            # Deliberate belt and braces: if the control's OnChange does not fire, the size
+            # readout stays blank but this still loads the bytes, and the attach reads the
+            # control directly anyway.
             OnSelect: |
-              =Set(varPhoto, MP_Camera.Photo);
-               Set(varB64, Substitute(JSON(MP_Camera.Photo, JSONFormat.IncludeBinaryData), """", ""))
+              =Set(varPhoto, MP_AddMedia.Media);
+               Set(varB64, Substitute(JSON(MP_AddMedia.Media, JSONFormat.IncludeBinaryData), """", ""))
 
       - MP_DiscardButton:
           Control: Classic/Button
@@ -149,7 +160,8 @@ Screens:
             DisplayMode: =If(IsBlank(varB64), DisplayMode.Disabled, DisplayMode.Edit)
             OnSelect: |
               =Set(varPhoto, Blank());
-               Set(varB64, "")
+               Set(varB64, "");
+               Reset(MP_AddMedia)
 
       - MP_PreviewFrame:
           Control: Rectangle
@@ -163,7 +175,7 @@ Screens:
       - MP_PreviewHint:
           Control: Label
           Properties:
-            Text: ="The captured photo appears here"
+            Text: ="The photo you pick appears here"
             Visible: =IsBlank(varB64)
             X: =12
             Y: =548
@@ -177,7 +189,9 @@ Screens:
       - MP_Preview:
           Control: Image
           Properties:
-            Image: =varPhoto
+            # Bound to the control, not to varPhoto, so the preview shows the real selection even
+            # if the variable was never set.
+            Image: =MP_AddMedia.Media
             Visible: =!IsBlank(varB64)
             X: =12
             Y: =548
@@ -202,7 +216,7 @@ Screens:
           Properties:
             Text: |
               =If(IsBlank(varB64),
-                  "No photo captured yet.",
+                  "No photo chosen yet. Tap Add picture above.",
                   Len(varB64) > 1048576,
                     "Too large: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
                     " KB. F&O accepts 1024 KB. Retake it further back.",
