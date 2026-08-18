@@ -137,6 +137,12 @@
         <Dependent type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" />
       </MissingDependency>
       <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+      <MissingDependency>
         <Required type="1" schemaName="mserp_powerappsinventtestvariableoutcomeentity" displayName="Test variable outcomes (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>

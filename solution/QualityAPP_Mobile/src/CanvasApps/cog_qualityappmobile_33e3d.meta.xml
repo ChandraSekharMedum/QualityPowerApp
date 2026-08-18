@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>cog_qualityappmobile_33e3d</Name>
-  <AppVersion>2026-08-18T07:22:53Z</AppVersion>
+  <AppVersion>2026-08-18T08:52:02Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>3.26081.16.0</CreatedByClientVersion>
   <MinClientVersion>3.26081.16.0</MinClientVersion>
-  <Tags>{"primaryDeviceWidth":"640","primaryDeviceHeight":"1136","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Phone","showStatusBar":"false","publisherVersion":"3.26081.16","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","m365CopilotSettingValue":"0"}</Tags>
+  <Tags>{"primaryDeviceWidth":"640","primaryDeviceHeight":"1136","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Phone","showStatusBar":"false","publisherVersion":"3.26081.16","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","m365CopilotSettingValue":"0","sienaVersion":"20260818T072253Z-3.26081.16.0"}</Tags>
   <IsCdsUpgraded>0</IsCdsUpgraded>
   <GalleryItemId xsi:nil="true"></GalleryItemId>
   <BackgroundColor>RGBA(0,176,240,1)</BackgroundColor>
   <DisplayName>Quality App Mobile</DisplayName>
-  <Description xsi:nil="true"></Description>
-  <CommitMessage xsi:nil="true"></CommitMessage>
+  <Description>Streamline quality management processes with the Quality App Mobile. Monitor, track, and manage quality-related tasks efficiently from your mobile device. Enhance operational oversight and support continuous improvement initiatives within your organization.</Description>
+  <CommitMessage>Save app with description provided in publish dialog.</CommitMessage>
   <Publisher xsi:nil="true"></Publisher>
   <AuthorizationReferences>[]</AuthorizationReferences>
   <ConnectionReferences>{}</ConnectionReferences>
-  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"NotSpecified","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"Quality order lines (mserp)":{"entitySetName":"mserp_inventqualityorderlineentitypowerapps","logicalName":"mserp_inventqualityorderlineentitypowerapp"},"mserp_inventqualityorderheaderentities":{"entitySetName":"mserp_inventqualityorderheaderentities","logicalName":"mserp_inventqualityorderheaderentity"},"Quality orders (mserp)":{"entitySetName":"mserp_inventqualityorderheaderentities","logicalName":"mserp_inventqualityorderheaderentity"},"mserp_inventqualityorderlineresultentities":{"entitySetName":"mserp_inventqualityorderlineresultentities","logicalName":"mserp_inventqualityorderlineresultentity"},"Quality order line results (mserp)":{"entitySetName":"mserp_inventqualityorderlineresultentities","logicalName":"mserp_inventqualityorderlineresultentity"},"mserp_powerappsinventtestvariableoutcomeentities":{"entitySetName":"mserp_powerappsinventtestvariableoutcomeentities","logicalName":"mserp_powerappsinventtestvariableoutcomeentity"},"Test variable outcomes (mserp)":{"entitySetName":"mserp_powerappsinventtestvariableoutcomeentities","logicalName":"mserp_powerappsinventtestvariableoutcomeentity"},"mserp_powerappfilesavingentities":{"entitySetName":"mserp_powerappfilesavingentities","logicalName":"mserp_powerappfilesavingentity"},"PowerAppFileSavingEntity (mserp)":{"entitySetName":"mserp_powerappfilesavingentities","logicalName":"mserp_powerappfilesavingentity"}}}}</DatabaseReferences>
+  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"Quality order lines (mserp)":{"entitySetName":"mserp_inventqualityorderlineentitypowerapps","logicalName":"mserp_inventqualityorderlineentitypowerapp"},"mserp_inventqualityorderheaderentities":{"entitySetName":"mserp_inventqualityorderheaderentities","logicalName":"mserp_inventqualityorderheaderentity"},"Quality orders (mserp)":{"entitySetName":"mserp_inventqualityorderheaderentities","logicalName":"mserp_inventqualityorderheaderentity"},"mserp_inventqualityorderlineresultentities":{"entitySetName":"mserp_inventqualityorderlineresultentities","logicalName":"mserp_inventqualityorderlineresultentity"},"Quality order line results (mserp)":{"entitySetName":"mserp_inventqualityorderlineresultentities","logicalName":"mserp_inventqualityorderlineresultentity"},"mserp_powerappsinventtestvariableoutcomeentities":{"entitySetName":"mserp_powerappsinventtestvariableoutcomeentities","logicalName":"mserp_powerappsinventtestvariableoutcomeentity"},"Test variable outcomes (mserp)":{"entitySetName":"mserp_powerappsinventtestvariableoutcomeentities","logicalName":"mserp_powerappsinventtestvariableoutcomeentity"},"mserp_powerappfilesavingentities":{"entitySetName":"mserp_powerappfilesavingentities","logicalName":"mserp_powerappfilesavingentity"},"PowerAppFileSavingEntity (mserp)":{"entitySetName":"mserp_powerappfilesavingentities","logicalName":"mserp_powerappfilesavingentity"},"mserp_powerappinventqolineentities":{"entitySetName":"mserp_powerappinventqolineentities","logicalName":"mserp_powerappinventqolineentity"},"Quality order lines (mserp)_1":{"entitySetName":"mserp_powerappinventqolineentities","logicalName":"mserp_powerappinventqolineentity"}}}}</DatabaseReferences>
   <AppComponents>[]</AppComponents>
   <AppComponentDependencies>[]</AppComponentDependencies>
   <CanConsumeAppPass>1</CanConsumeAppPass>
@@ -24,7 +24,7 @@
   <AdminControlBypassConsent>0</AdminControlBypassConsent>
   <EmbeddedApp xsi:nil="true"></EmbeddedApp>
   <IntroducedVersion>1.0</IntroducedVersion>
-  <CdsDependencies>{"cdsdependencies":[{"logicalname":"mserp_inventqualityorderlineentitypowerapp","componenttype":1},{"logicalname":"mserp_inventqualityorderheaderentity","componenttype":1},{"logicalname":"mserp_inventqualityorderlineresultentity","componenttype":1},{"logicalname":"mserp_powerappsinventtestvariableoutcomeentity","componenttype":1},{"logicalname":"mserp_powerappfilesavingentity","componenttype":1}]}</CdsDependencies>
+  <CdsDependencies>{"cdsdependencies":[{"logicalname":"mserp_inventqualityorderlineentitypowerapp","componenttype":1},{"logicalname":"mserp_inventqualityorderheaderentity","componenttype":1},{"logicalname":"mserp_inventqualityorderlineresultentity","componenttype":1},{"logicalname":"mserp_powerappsinventtestvariableoutcomeentity","componenttype":1},{"logicalname":"mserp_powerappfilesavingentity","componenttype":1},{"logicalname":"mserp_powerappinventqolineentity","componenttype":1}]}</CdsDependencies>
   <IsCustomizable>1</IsCustomizable>
   <BackgroundImageUri>/CanvasApps/cog_qualityappmobile_33e3d_BackgroundImageUri</BackgroundImageUri>
   <DocumentUri>/CanvasApps/cog_qualityappmobile_33e3d_DocumentUri.msapp</DocumentUri>

@@ -252,9 +252,22 @@ Screens:
             - MR_RowMeta:
                 Control: Label
                 Properties:
+                  # The tolerance table is bound as 'Quality order lines (mserp)_1' -- Power Apps
+                  # suffixed it because a DIFFERENT virtual table already claimed the display name
+                  # "Quality order lines (mserp)". The suffixed one is the useful one:
+                  # mserp_powerappinventqolineentity, which covers every order. Joins on order
+                  # number + sequence.
                   Text: |
                     ="seq " & ThisItem.mserp_qualityordersequencenumber &
-                     "   -   line " & ThisItem.mserp_resultlinenumber
+                     "   -   line " & ThisItem.mserp_resultlinenumber &
+                     With({ ln: LookUp('Quality order lines (mserp)_1',
+                                       mserp_qualityorderid = varQO.mserp_qualityordernumber &&
+                                       mserp_dataareaid = varQO.mserp_dataareaid &&
+                                       mserp_testsequence = ThisItem.mserp_qualityordersequencenumber) },
+                        If(ln.mserp_upperlimit > ln.mserp_lowerlimit,
+                           "   -   range " & ln.mserp_lowerlimit & " to " & ln.mserp_upperlimit &
+                             If(IsBlank(ln.mserp_testunitid), "", " " & ln.mserp_testunitid),
+                           ""))
                   X: =12
                   Y: =60
                   Width: =Parent.TemplateWidth - 24
@@ -325,7 +338,15 @@ Screens:
           Properties:
             Text: |
               ="seq " & varLineSeq & "   -   " &
-               If(varIsOption, "choose an outcome", "enter a measured value")
+               If(varIsOption, "choose an outcome",
+                  With({ ln: LookUp('Quality order lines (mserp)_1',
+                                    mserp_qualityorderid = varQO.mserp_qualityordernumber &&
+                                    mserp_dataareaid = varQO.mserp_dataareaid &&
+                                    mserp_testsequence = varLineSeq) },
+                     If(ln.mserp_upperlimit > ln.mserp_lowerlimit,
+                        "acceptable range " & ln.mserp_lowerlimit & " to " & ln.mserp_upperlimit &
+                          If(IsBlank(ln.mserp_testunitid), "", " " & ln.mserp_testunitid),
+                        "enter a measured value")))
             Visible: =varLineSelected
             X: =24
             Y: =614
@@ -347,6 +368,52 @@ Screens:
             Height: =52
             Size: =16
             Align: =Align.Right
+
+      - MR_TolHint:
+          Control: Label
+          Properties:
+            # Advisory only. F&O owns the verdict and recalculates it on save -- this just warns
+            # the inspector before they commit a value that will come back as a fail.
+            Text: |
+              =With({ ln: LookUp('Quality order lines (mserp)_1',
+                                 mserp_qualityorderid = varQO.mserp_qualityordernumber &&
+                                 mserp_dataareaid = varQO.mserp_dataareaid &&
+                                 mserp_testsequence = varLineSeq) },
+                 If(ln.mserp_upperlimit <= ln.mserp_lowerlimit, "No numeric range is set for this test.",
+                    Value(MR_ValueInput.Text) < ln.mserp_lowerlimit ||
+                    Value(MR_ValueInput.Text) > ln.mserp_upperlimit,
+                      "Outside the range. F&O will record this as a fail.",
+                    "Inside the range."))
+            Visible: =varLineSelected && !varIsOption && !IsBlank(MR_ValueInput.Text)
+            X: =24
+            Y: =704
+            Width: =Parent.Width - 48
+            Height: =40
+            Size: =11
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+            Color: |
+              =With({ ln: LookUp('Quality order lines (mserp)_1',
+                                 mserp_qualityorderid = varQO.mserp_qualityordernumber &&
+                                 mserp_dataareaid = varQO.mserp_dataareaid &&
+                                 mserp_testsequence = varLineSeq) },
+                 If(ln.mserp_upperlimit <= ln.mserp_lowerlimit, RGBA(107, 125, 132, 1),
+                    Value(MR_ValueInput.Text) < ln.mserp_lowerlimit ||
+                    Value(MR_ValueInput.Text) > ln.mserp_upperlimit,
+                      RGBA(156, 31, 23, 1),
+                    RGBA(32, 97, 61, 1)))
+            Fill: |
+              =With({ ln: LookUp('Quality order lines (mserp)_1',
+                                 mserp_qualityorderid = varQO.mserp_qualityordernumber &&
+                                 mserp_dataareaid = varQO.mserp_dataareaid &&
+                                 mserp_testsequence = varLineSeq) },
+                 If(ln.mserp_upperlimit <= ln.mserp_lowerlimit, RGBA(233, 239, 241, 1),
+                    Value(MR_ValueInput.Text) < ln.mserp_lowerlimit ||
+                    Value(MR_ValueInput.Text) > ln.mserp_upperlimit,
+                      RGBA(247, 227, 225, 1),
+                    RGBA(222, 238, 228, 1)))
 
       - MR_OutcomeGallery:
           Control: Gallery
