@@ -151,6 +151,30 @@ references. So it can live in **its own solution**, and then:
 mobile publish overwriting the parked app, and is cleaner ALM. If you would rather keep one
 solution, the tooling fix goes back on the list.
 
+### DONE 2026-08-18 — `QualityAPP_Mobile` created
+
+```
+uniquename   QualityAPP_Mobile
+friendlyname Quality App Mobile
+publisher    ColumbusGlobal (cog)
+version      0.1.0.0
+id           c3c60ea7-d39a-f111-b8dc-000d3a1b06dc
+components   5 virtual entities, 0 failures
+```
+
+Created by `tools\New-QmMobileSolution.ps1` (idempotent, safe to re-run).
+
+`QualityManagementApp` was not touched. It stands at 46 components — 38 entities, 5 workflows,
+2 connection references, 1 canvas app. That is 3 more than the 43 recorded earlier in the
+session, and the 3 are `cog_item`, `cog_attachment` and `cog_QM_DrainAttachment`, all added
+during the attachment work before the mobile decision. Solution membership is not exclusive, so
+adding the five virtual entities to the mobile solution removed them from nothing.
+
+**No tooling change is now required**: each solution holds exactly one canvas app, so
+`Export-Solution.ps1` and `Publish-CanvasApp.ps1` remain correct as written. Both already take
+`-SolutionName`, so the mobile app is published with
+`-SolutionName QualityAPP_Mobile`.
+
 ---
 
 ## 9. The one thing to prove first
