@@ -169,6 +169,20 @@ Screens:
                   Fill: |
                     =If(ThisItem.mserp_qualityordersequencenumber = varLineSeq && varLineSelected,
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+                  # A Rectangle swallows the tap just as a Label does, so the bare areas of the row
+                  # are dead without this. On a phone the row is what people tap.
+                  OnSelect: |
+                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
+                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
+                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
+                     Set(varLineValue, ThisItem.mserp_resultvalue);
+                     Set(varLineSelected, true);
+                     Set(varIsOption,
+                         CountRows(Filter('Test variable outcomes (mserp)',
+                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                                          mserp_testid = ThisItem.mserp_qualitytestid,
+                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
+                     Reset(MR_ValueInput)
 
             - MR_TestName:
                 Control: Label
@@ -446,6 +460,7 @@ Screens:
                   Fill: |
                     =If(ThisItem.mserp_variableoutcomeid = varLineOutcome,
                         RGBA(222, 238, 228, 1), RGBA(244, 246, 247, 1))
+                  OnSelect: =Set(varLineOutcome, ThisItem.mserp_variableoutcomeid)
 
             - MR_OcName:
                 Control: Label

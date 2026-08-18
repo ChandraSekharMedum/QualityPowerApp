@@ -88,7 +88,6 @@ Screens:
             ShowScrollbar: =true
             OnSelect: |
               =Set(varQO, ThisItem);
-               Set(varLine, Blank());
                Navigate(MobResults, ScreenTransition.None)
           Children:
             - MO_RowFill:
@@ -99,6 +98,13 @@ Screens:
                   Width: =Parent.TemplateWidth
                   Height: =91
                   Fill: =RGBA(255, 255, 255, 1)
+                  # A Rectangle swallows the tap exactly like a Label does. Without this handler
+                  # the bare parts of the row -- the gaps between labels, under the status chip --
+                  # are dead, and the gallery's own OnSelect never fires. On a phone people tap
+                  # the row, not the text, so this is the handler that actually gets used.
+                  OnSelect: |
+                    =Set(varQO, ThisItem);
+                     Navigate(MobResults, ScreenTransition.None)
 
             - MO_OrderNo:
                 Control: Label
@@ -115,7 +121,6 @@ Screens:
                   VerticalAlign: =VerticalAlign.Middle
                   OnSelect: |
                     =Set(varQO, ThisItem);
-                     Set(varLine, Blank());
                      Navigate(MobResults, ScreenTransition.None)
 
             - MO_Status:
@@ -146,7 +151,6 @@ Screens:
                         RGBA(248, 235, 214, 1))
                   OnSelect: |
                     =Set(varQO, ThisItem);
-                     Set(varLine, Blank());
                      Navigate(MobResults, ScreenTransition.None)
 
             - MO_Item:
@@ -164,7 +168,6 @@ Screens:
                   VerticalAlign: =VerticalAlign.Middle
                   OnSelect: |
                     =Set(varQO, ThisItem);
-                     Set(varLine, Blank());
                      Navigate(MobResults, ScreenTransition.None)
 
             - MO_Meta:
@@ -183,7 +186,6 @@ Screens:
                   VerticalAlign: =VerticalAlign.Middle
                   OnSelect: |
                     =Set(varQO, ThisItem);
-                     Set(varLine, Blank());
                      Navigate(MobResults, ScreenTransition.None)
 
             - MO_Rule:
