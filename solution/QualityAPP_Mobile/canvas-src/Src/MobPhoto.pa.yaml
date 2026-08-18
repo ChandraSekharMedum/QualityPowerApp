@@ -25,8 +25,7 @@ Screens:
       LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
       OnVisible: |
         =Set(varPhoto, Blank());
-         Set(varB64, "");
-         Set(varAgainstTest, varLineSelected)
+         Set(varB64, "")
     Children:
       - MP_HeaderBar:
           Control: Label
@@ -61,46 +60,16 @@ Screens:
             Size: =12
             OnSelect: =Back()
 
-      - MP_SubjectTest:
-          Control: Classic/Button
-          Properties:
-            Text: ="This test"
-            X: =12
-            Y: =66
-            Width: =(Parent.Width - 36) / 2
-            Height: =44
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            BorderThickness: =2
-            DisplayMode: =If(varLineSelected, DisplayMode.Edit, DisplayMode.Disabled)
-            Fill: =If(varAgainstTest, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
-            Color: =If(varAgainstTest, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
-            BorderColor: =If(varAgainstTest, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
-            OnSelect: =Set(varAgainstTest, true)
-
-      - MP_SubjectOrder:
-          Control: Classic/Button
-          Properties:
-            Text: ="Whole order"
-            X: =Parent.Width / 2 + 6
-            Y: =66
-            Width: =(Parent.Width - 36) / 2
-            Height: =44
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            BorderThickness: =2
-            Fill: =If(!varAgainstTest, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
-            Color: =If(!varAgainstTest, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
-            BorderColor: =If(!varAgainstTest, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
-            OnSelect: =Set(varAgainstTest, false)
-
+      # The "This test" / "Whole order" toggle is gone. F&O's quality attachment path identifies a
+      # test line, so a whole-order photo had nowhere to bind -- offering the choice implied a
+      # capability that does not exist.
       - MP_Subject:
           Control: Label
           Properties:
             Text: |
-              =If(varAgainstTest && varLineSelected,
+              =If(varLineSelected,
                   "Attaching to: " & Trim(varLineTest) & "  (seq " & varLineSeq & ")",
-                  "Attaching to the order as a whole")
+                  "Go back and tap a test first - F&O attaches the photo to a test line.")
             X: =12
             Y: =116
             Width: =Parent.Width - 24
@@ -271,7 +240,8 @@ Screens:
                   !StartsWith(varB64, "data:") ||
                   Len(varB64) > 1048576 ||
                   IsBlank(MP_FileName.Text) ||
-                  IsBlank(varQO.mserp_qualityordernumber),
+                  IsBlank(varQO.mserp_qualityordernumber) ||
+                  !varLineSelected,
                   DisplayMode.Disabled, DisplayMode.Edit)
             # LineNum is looked up rather than carried in a variable, so the result row stays the
             # single source of truth for it. mserp_formname caps at 20 characters.
@@ -280,19 +250,24 @@ Screens:
                Patch('PowerAppFileSavingEntity (mserp)', Defaults('PowerAppFileSavingEntity (mserp)'),
                  { mserp_tablerefid: "0000",
                    mserp_displayordernumber: varQO.mserp_qualityordernumber,
-                   mserp_testid: If(varAgainstTest && varLineSelected, varLineTest, ""),
-                   mserp_testsequence: If(varAgainstTest && varLineSelected, varLineSeq, 0),
+                   # Always sent. The demo app's quality path has no whole-order option -- it
+                   # always identifies a test line, so that is the shape F&O is known to accept.
+                   mserp_testid: varLineTest,
+                   mserp_testsequence: varLineSeq,
                    mserp_linenum:
-                     If(varAgainstTest && varLineSelected,
-                        Coalesce(
-                          LookUp('Quality order line results (mserp)',
-                                 mserp_qualityordernumber = varQO.mserp_qualityordernumber &&
-                                 mserp_dataareaid = varQO.mserp_dataareaid &&
-                                 mserp_qualityordersequencenumber = varLineSeq).mserp_resultlinenumber,
-                          0),
-                        0),
+                     Coalesce(
+                       LookUp('Quality order line results (mserp)',
+                              mserp_qualityordernumber = varQO.mserp_qualityordernumber &&
+                              mserp_dataareaid = varQO.mserp_dataareaid &&
+                              mserp_qualityordersequencenumber = varLineSeq).mserp_resultlinenumber,
+                       0),
                    mserp_filename: MP_FileName.Text,
-                   mserp_formname: "InventQualityOrder",
+                   # "Quality", NOT "InventQualityOrder". FormName tells F&O which context the
+                   # file belongs to. With the wrong value F&O accepted the row, consumed it, and
+                   # bound the file to nothing -- the upload looked successful and no attachment
+                   # ever appeared. The demo app sends "Quality" on the quality path and
+                   # "Non conformance" on the NC path.
+                   mserp_formname: "Quality",
                    mserp_imagevarchar: varB64,
                    mserp_dataareaid: varQO.mserp_dataareaid });
                Set(varSending, false);
