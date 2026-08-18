@@ -187,10 +187,10 @@ Screens:
             - MR_TestName:
                 Control: Label
                 Properties:
-                  Text: =ThisItem.mserp_qualitytestid
+                  Text: =Trim(ThisItem.mserp_qualitytestid)
                   X: =12
                   Y: =8
-                  Width: =Parent.TemplateWidth - 116
+                  Width: =Parent.TemplateWidth - 128
                   Height: =26
                   Size: =13
                   FontWeight: =FontWeight.Semibold
@@ -241,7 +241,7 @@ Screens:
                 Properties:
                   Text: |
                     =If(!IsBlank(ThisItem.mserp_qualitytestvariableoutcomeid),
-                        "Outcome: " & ThisItem.mserp_qualitytestvariableoutcomeid,
+                        "Outcome: " & Trim(ThisItem.mserp_qualitytestvariableoutcomeid),
                         "Value: " & ThisItem.mserp_resultvalue)
                   X: =12
                   Y: =38
@@ -337,7 +337,7 @@ Screens:
       - MR_EdTitle:
           Control: Label
           Properties:
-            Text: =varLineTest
+            Text: =Trim(varLineTest)
             Visible: =varLineSelected
             X: =24
             Y: =586
@@ -465,7 +465,7 @@ Screens:
             - MR_OcName:
                 Control: Label
                 Properties:
-                  Text: =ThisItem.mserp_variableoutcomeid
+                  Text: =Trim(ThisItem.mserp_variableoutcomeid)
                   X: =12
                   Y: =4
                   Width: =Parent.TemplateWidth - 130
@@ -510,7 +510,7 @@ Screens:
             Text: |
               ="Currently recorded: " &
                If(varIsOption,
-                  If(IsBlank(varLineOutcome), "nothing", varLineOutcome),
+                  If(IsBlank(varLineOutcome), "nothing", Trim(varLineOutcome)),
                   If(IsBlank(varLineValue), "nothing", varLineValue))
             Visible: =varLineSelected
             X: =24
@@ -564,16 +564,34 @@ Screens:
           Control: Label
           Properties:
             Text: |
-              ="F&O works out Pass or Fail itself from the value or outcome you record. The " &
-               "verdict above updates when the list refreshes."
+              ="F&O works out Pass or Fail itself from the value or outcome you record."
             Visible: =varLineSelected
             X: =24
-            Y: =932
+            Y: =930
             Width: =Parent.Width - 48
-            Height: =44
+            Height: =30
             Size: =9
             Color: =RGBA(107, 125, 132, 1)
             VerticalAlign: =VerticalAlign.Middle
+
+      # The photo action also lives in the header, but a small button in a header bar is easy to
+      # miss on a phone. This is the one an inspector actually finds.
+      - MR_AddPhotoButton:
+          Control: Classic/Button
+          Properties:
+            Text: |
+              =If(varLineSelected, "Add photo for this test", "Add photo")
+            X: =24
+            Y: =966
+            Width: =Parent.Width - 48
+            Height: =52
+            Fill: =RGBA(255, 255, 255, 1)
+            Color: =RGBA(13, 98, 115, 1)
+            BorderColor: =RGBA(13, 98, 115, 1)
+            BorderThickness: =2
+            Size: =14
+            FontWeight: =FontWeight.Semibold
+            OnSelect: =Navigate(MobPhoto, ScreenTransition.None)
 
       - MR_NoOrder:
           Control: Label

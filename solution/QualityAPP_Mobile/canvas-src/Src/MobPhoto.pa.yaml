@@ -95,7 +95,7 @@ Screens:
           Properties:
             Text: |
               =If(varAgainstTest && varLineSelected,
-                  "Attaching to: " & varLineTest & "  (seq " & varLineSeq & ")",
+                  "Attaching to: " & Trim(varLineTest) & "  (seq " & varLineSeq & ")",
                   "Attaching to the order as a whole")
             X: =12
             Y: =116

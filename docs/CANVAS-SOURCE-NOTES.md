@@ -92,9 +92,15 @@ are fully covered by labels never fires its own `OnSelect`. The first Create NC 
 select a quality order for exactly this reason, while the order list appeared to work only
 because its order-number label happened to carry its own handler.
 
-**The rule:** put the selection handler on the **gallery** *and* on **every label in the row
-template**. There is no shared-handler mechanism in canvas apps, so the formula gets duplicated —
-that is the cost of the pattern, and it is cheaper than a dead row.
+**Third symptom — a completely dead row.** A `Rectangle` swallows the tap exactly as a Label
+does. Row templates usually have a full-width rectangle behind the text as the row background; if
+it has no handler, every tap that lands on bare row is dead. On a tablet you hit a label often
+enough not to notice. On a phone people tap the row, so the screen looks broken. That is what
+happened to the mobile order picker.
+
+**The rule:** put the selection handler on the **gallery** *and* on **every element in the row
+template — labels and rectangles alike**. There is no shared-handler mechanism in canvas apps, so
+the formula gets duplicated; that is the cost of the pattern, and it is cheaper than a dead row.
 
 Underlining the row's primary identifier and colouring it as a link is worth doing: it tells the
 inspector the row is tappable rather than leaving them to discover it.

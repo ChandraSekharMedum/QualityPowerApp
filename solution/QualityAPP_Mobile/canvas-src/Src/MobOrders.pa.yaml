@@ -157,7 +157,7 @@ Screens:
                 Control: Label
                 Properties:
                   Text: |
-                    =ThisItem.mserp_itemnumber &
+                    =Trim(ThisItem.mserp_itemnumber) &
                      If(IsBlank(ThisItem.mserp_productname), "", "  -  " & ThisItem.mserp_productname)
                   X: =12
                   Y: =36
@@ -175,7 +175,7 @@ Screens:
                 Properties:
                   Text: |
                     =Upper(ThisItem.mserp_dataareaid) &
-                     "   -   group " & ThisItem.mserp_qualitytestgroupid &
+                     "   -   group " & Trim(ThisItem.mserp_qualitytestgroupid) &
                      "   -   qty " & ThisItem.mserp_inventoryquantity
                   X: =12
                   Y: =60
