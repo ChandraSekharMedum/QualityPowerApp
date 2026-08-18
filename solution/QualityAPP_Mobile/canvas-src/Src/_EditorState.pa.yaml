@@ -8,4 +8,6 @@
 # ************************************************************************************************
 EditorState:
   ScreensOrder:
-    - Screen1
+    - MobOrders
+    - MobResults
+    - MobPhoto

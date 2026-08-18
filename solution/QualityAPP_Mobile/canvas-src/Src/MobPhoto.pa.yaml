@@ -1,0 +1,295 @@
+# ************************************************************************************************
+# Quality App Mobile -- photograph a defect.  Phone layout, 640 x 1136 portrait.
+#
+# Writes straight to POWERAPPFILESAVINGENTITY. F&O then picks the staged file up on a periodic
+# job -- measured at about 13.5 minutes -- and turns it into a document attachment. So SENT here
+# means F&O has taken the file, not that it is visible in F&O yet.
+#
+# TWO DETAILS COPIED FROM THE WORKING DEMO APP IN usdemo01, both re-probed here:
+#   ImageVarchar keeps the whole "data:image/jpeg;base64,..." string; only the quotes JSON() adds
+#   are stripped. F&O accepts raw base64 too, but rendering cannot be verified over OData, so the
+#   proven form wins.
+#   TableRefId is the literal "0000". The field is required but evidently only needs a value.
+#
+# F&O accepts exactly 1,048,576 characters and rejects one more, so the size is checked here
+# rather than letting F&O reject it minutes later.
+# ************************************************************************************************
+Screens:
+  MobPhoto:
+    Properties:
+      Fill: =RGBA(244, 246, 247, 1)
+      LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+      OnVisible: |
+        =Set(varPhoto, Blank());
+         Set(varB64, "");
+         Set(varAgainstTest, varLineSelected)
+    Children:
+      - MP_HeaderBar:
+          Control: Label
+          Properties:
+            Text: |
+              =If(IsBlank(varQO.mserp_qualityordernumber),
+                  "Photo  -  no order",
+                  "Photo  -  QO " & varQO.mserp_qualityordernumber)
+            X: =0
+            Y: =0
+            Width: =Parent.Width
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =17
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =56
+            VerticalAlign: =VerticalAlign.Middle
+
+      - MP_BackButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="<"
+            X: =8
+            Y: =12
+            Width: =40
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =12
+            OnSelect: =Back()
+
+      - MP_SubjectTest:
+          Control: Classic/Button
+          Properties:
+            Text: ="This test"
+            X: =12
+            Y: =66
+            Width: =(Parent.Width - 36) / 2
+            Height: =44
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            BorderThickness: =2
+            DisplayMode: =If(varLineSelected, DisplayMode.Edit, DisplayMode.Disabled)
+            Fill: =If(varAgainstTest, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Color: =If(varAgainstTest, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            BorderColor: =If(varAgainstTest, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
+            OnSelect: =Set(varAgainstTest, true)
+
+      - MP_SubjectOrder:
+          Control: Classic/Button
+          Properties:
+            Text: ="Whole order"
+            X: =Parent.Width / 2 + 6
+            Y: =66
+            Width: =(Parent.Width - 36) / 2
+            Height: =44
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            BorderThickness: =2
+            Fill: =If(!varAgainstTest, RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Color: =If(!varAgainstTest, RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            BorderColor: =If(!varAgainstTest, RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
+            OnSelect: =Set(varAgainstTest, false)
+
+      - MP_Subject:
+          Control: Label
+          Properties:
+            Text: |
+              =If(varAgainstTest && varLineSelected,
+                  "Attaching to: " & varLineTest & "  (seq " & varLineSeq & ")",
+                  "Attaching to the order as a whole")
+            X: =12
+            Y: =116
+            Width: =Parent.Width - 24
+            Height: =22
+            Size: =10
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MP_Camera:
+          Control: Camera
+          Properties:
+            X: =12
+            Y: =144
+            Width: =Parent.Width - 24
+            Height: =330
+            # JSON(...IncludeBinaryData) renders the photo as a quoted data URI. Strip only the
+            # quotes -- the "data:image/...;base64," prefix stays, matching the demo app.
+            OnSelect: |
+              =Set(varPhoto, MP_Camera.Photo);
+               Set(varB64, Substitute(JSON(MP_Camera.Photo, JSONFormat.IncludeBinaryData), """", ""))
+
+      - MP_CaptureButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="Capture"
+            X: =12
+            Y: =484
+            Width: =(Parent.Width - 36) / 2
+            Height: =52
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =14
+            FontWeight: =FontWeight.Semibold
+            OnSelect: |
+              =Set(varPhoto, MP_Camera.Photo);
+               Set(varB64, Substitute(JSON(MP_Camera.Photo, JSONFormat.IncludeBinaryData), """", ""))
+
+      - MP_DiscardButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="Discard"
+            X: =Parent.Width / 2 + 6
+            Y: =484
+            Width: =(Parent.Width - 36) / 2
+            Height: =52
+            Fill: =RGBA(255, 255, 255, 1)
+            Color: =RGBA(13, 98, 115, 1)
+            BorderColor: =RGBA(210, 220, 223, 1)
+            BorderThickness: =2
+            Size: =14
+            DisplayMode: =If(IsBlank(varB64), DisplayMode.Disabled, DisplayMode.Edit)
+            OnSelect: |
+              =Set(varPhoto, Blank());
+               Set(varB64, "")
+
+      - MP_PreviewFrame:
+          Control: Rectangle
+          Properties:
+            X: =12
+            Y: =548
+            Width: =Parent.Width - 24
+            Height: =300
+            Fill: =RGBA(233, 239, 241, 1)
+
+      - MP_PreviewHint:
+          Control: Label
+          Properties:
+            Text: ="The captured photo appears here"
+            Visible: =IsBlank(varB64)
+            X: =12
+            Y: =548
+            Width: =Parent.Width - 24
+            Height: =300
+            Size: =11
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MP_Preview:
+          Control: Image
+          Properties:
+            Image: =varPhoto
+            Visible: =!IsBlank(varB64)
+            X: =12
+            Y: =548
+            Width: =Parent.Width - 24
+            Height: =300
+            ImagePosition: =ImagePosition.Fit
+
+      - MP_FileName:
+          Control: Classic/TextInput
+          Properties:
+            Default: |
+              ="QO" & varQO.mserp_qualityordernumber & "-" & Text(Now(), "hhmmss") & ".jpg"
+            HintText: ="file name"
+            X: =12
+            Y: =860
+            Width: =Parent.Width - 24
+            Height: =44
+            Size: =12
+
+      - MP_SizeNote:
+          Control: Label
+          Properties:
+            Text: |
+              =If(IsBlank(varB64),
+                  "No photo captured yet.",
+                  Len(varB64) > 1048576,
+                    "Too large: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
+                    " KB. F&O accepts 1024 KB. Retake it further back.",
+                  "Ready: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
+                  " KB, inside the 1024 KB F&O limit.")
+            X: =12
+            Y: =912
+            Width: =Parent.Width - 24
+            Height: =52
+            Size: =11
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle
+            Color: |
+              =If(IsBlank(varB64), RGBA(107, 125, 132, 1),
+                  Len(varB64) > 1048576, RGBA(156, 31, 23, 1),
+                  RGBA(32, 97, 61, 1))
+            Fill: |
+              =If(IsBlank(varB64), RGBA(233, 239, 241, 1),
+                  Len(varB64) > 1048576, RGBA(247, 227, 225, 1),
+                  RGBA(222, 238, 228, 1))
+
+      - MP_AttachButton:
+          Control: Classic/Button
+          Properties:
+            Text: =If(varSending, "Sending...", "Send to F&O")
+            X: =12
+            Y: =974
+            Width: =Parent.Width - 24
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =15
+            FontWeight: =FontWeight.Semibold
+            DisplayMode: |
+              =If(varSending ||
+                  IsBlank(varB64) ||
+                  Len(varB64) > 1048576 ||
+                  IsBlank(MP_FileName.Text) ||
+                  IsBlank(varQO.mserp_qualityordernumber),
+                  DisplayMode.Disabled, DisplayMode.Edit)
+            # LineNum is looked up rather than carried in a variable, so the result row stays the
+            # single source of truth for it. mserp_formname caps at 20 characters.
+            OnSelect: |
+              =Set(varSending, true);
+               Patch('PowerAppFileSavingEntity (mserp)', Defaults('PowerAppFileSavingEntity (mserp)'),
+                 { mserp_tablerefid: "0000",
+                   mserp_displayordernumber: varQO.mserp_qualityordernumber,
+                   mserp_testid: If(varAgainstTest && varLineSelected, varLineTest, ""),
+                   mserp_testsequence: If(varAgainstTest && varLineSelected, varLineSeq, 0),
+                   mserp_linenum:
+                     If(varAgainstTest && varLineSelected,
+                        Coalesce(
+                          LookUp('Quality order line results (mserp)',
+                                 mserp_qualityordernumber = varQO.mserp_qualityordernumber &&
+                                 mserp_dataareaid = varQO.mserp_dataareaid &&
+                                 mserp_qualityordersequencenumber = varLineSeq).mserp_resultlinenumber,
+                          0),
+                        0),
+                   mserp_filename: MP_FileName.Text,
+                   mserp_formname: "InventQualityOrder",
+                   mserp_imagevarchar: varB64,
+                   mserp_dataareaid: varQO.mserp_dataareaid });
+               Set(varSending, false);
+               If(IsEmpty(Errors('PowerAppFileSavingEntity (mserp)')),
+                  Notify("Photo sent. F&O attaches it on its next run, about 15 minutes.",
+                         NotificationType.Success);
+                  Set(varPhoto, Blank());
+                  Set(varB64, "");
+                  Reset(MP_FileName),
+                  Notify(First(Errors('PowerAppFileSavingEntity (mserp)')).Message,
+                         NotificationType.Error))
+
+      - MP_HowNote:
+          Control: Label
+          Properties:
+            Text: |
+              ="F&O takes the file immediately but attaches it on a periodic job, so allow about " &
+               "15 minutes before looking for it on the quality order."
+            X: =12
+            Y: =1038
+            Width: =Parent.Width - 24
+            Height: =56
+            Fill: =RGBA(233, 239, 241, 1)
+            Color: =RGBA(107, 125, 132, 1)
+            Size: =9
+            PaddingLeft: =12
+            PaddingRight: =12
+            VerticalAlign: =VerticalAlign.Middle

@@ -1,0 +1,510 @@
+# ************************************************************************************************
+# Quality App Mobile -- test result entry.  Phone layout, 640 x 1136 portrait.
+#
+# THE SCREEN WRITES STRAIGHT TO F&O. No cache, no outbox, no flow. The gallery row IS the F&O
+# record, so there is no target id to resolve and no cache to go stale -- the class of bug that
+# stranded QO 000219 in the tablet app cannot occur here.
+#
+# NUMERIC vs OPTION TESTS
+#
+# F&O tests are either quantitative (type a number) or qualitative (choose an outcome such as
+# Pass, Too low, To big). Proven 2026-08-18: writing mserp_resultvalue OR
+# mserp_qualitytestvariableoutcomeid both cause F&O to recalculate mserp_testresult by itself --
+# 11 -> 10 flipped a line to Pass, Pass -> Fail flipped another to Fail. So this screen never
+# computes a verdict; it writes the result and shows what F&O decided.
+#
+# The discriminator is "do variable outcomes exist for this order's test group and this test id".
+# That is derived from the outcomes table rather than from a tolerance column, because the table
+# holding tolerances cannot be added in Studio: two different virtual tables share the display
+# name "Quality order lines (mserp)" and the picker cannot tell them apart. See
+# docs\MOBILE-ONLINE-DESIGN.md.
+#
+# The selected line is tracked as SCALARS, not as a record variable. Set(var, Blank()) produces an
+# untyped blank and var.field then fails to compile.
+# ************************************************************************************************
+Screens:
+  MobResults:
+    Properties:
+      Fill: =RGBA(244, 246, 247, 1)
+      LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+      OnVisible: |
+        =Set(varLineSelected, false);
+         Set(varLineTest, "");
+         Set(varLineSeq, 0);
+         Set(varLineOutcome, "");
+         Set(varLineValue, "");
+         Set(varIsOption, false);
+         Set(varSaving, false);
+         Refresh('Quality order line results (mserp)')
+    Children:
+      - MR_HeaderBar:
+          Control: Label
+          Properties:
+            Text: |
+              =If(IsBlank(varQO.mserp_qualityordernumber),
+                  "No order selected",
+                  "QO " & varQO.mserp_qualityordernumber)
+            X: =0
+            Y: =0
+            Width: =Parent.Width
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =17
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =56
+            VerticalAlign: =VerticalAlign.Middle
+
+      - MR_BackButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="<"
+            X: =8
+            Y: =12
+            Width: =40
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =12
+            OnSelect: =Back()
+
+      - MR_PhotoButton:
+          Control: Classic/Button
+          Properties:
+            Text: ="Photo"
+            X: =Parent.Width - 100
+            Y: =12
+            Width: =92
+            Height: =32
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Size: =11
+            OnSelect: =Navigate(MobPhoto, ScreenTransition.None)
+
+      - MR_Context:
+          Control: Label
+          Properties:
+            Text: |
+              =varQO.mserp_itemnumber &
+               If(IsBlank(varQO.mserp_productname), "", "  -  " & varQO.mserp_productname)
+            X: =12
+            Y: =64
+            Width: =Parent.Width - 24
+            Height: =24
+            Size: =12
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(16, 26, 30, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+      - MR_Chips:
+          Control: Label
+          Properties:
+            Text: |
+              =Upper(varQO.mserp_dataareaid) &
+               "   -   group " & varQO.mserp_qualitytestgroupid &
+               "   -   qty " & varQO.mserp_inventoryquantity
+            X: =12
+            Y: =88
+            Width: =Parent.Width - 24
+            Height: =20
+            Size: =10
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MR_GridHeader:
+          Control: Label
+          Properties:
+            Text: ="TESTS  -  TAP ONE TO ENTER ITS RESULT"
+            X: =12
+            Y: =114
+            Width: =Parent.Width - 24
+            Height: =24
+            Fill: =RGBA(233, 239, 241, 1)
+            Color: =RGBA(107, 125, 132, 1)
+            Size: =8
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =10
+            VerticalAlign: =VerticalAlign.Middle
+
+      - MR_Gallery:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            Items: |
+              =SortByColumns(
+                 Filter('Quality order line results (mserp)',
+                        mserp_qualityordernumber = varQO.mserp_qualityordernumber,
+                        mserp_dataareaid = varQO.mserp_dataareaid),
+                 "mserp_qualityordersequencenumber", SortOrder.Ascending)
+            X: =12
+            Y: =142
+            Width: =Parent.Width - 24
+            Height: =420
+            TemplateSize: =84
+            TemplatePadding: =0
+            ShowScrollbar: =true
+            OnSelect: |
+              =Set(varLineTest, ThisItem.mserp_qualitytestid);
+               Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
+               Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
+               Set(varLineValue, ThisItem.mserp_resultvalue);
+               Set(varLineSelected, true);
+               Set(varIsOption,
+                   CountRows(Filter('Test variable outcomes (mserp)',
+                                    mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                                    mserp_testid = ThisItem.mserp_qualitytestid,
+                                    mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
+               Reset(MR_ValueInput)
+          Children:
+            - MR_RowFill:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =83
+                  Fill: |
+                    =If(ThisItem.mserp_qualityordersequencenumber = varLineSeq && varLineSelected,
+                        RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+
+            - MR_TestName:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.mserp_qualitytestid
+                  X: =12
+                  Y: =8
+                  Width: =Parent.TemplateWidth - 116
+                  Height: =26
+                  Size: =13
+                  FontWeight: =FontWeight.Semibold
+                  Underline: =true
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
+                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
+                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
+                     Set(varLineValue, ThisItem.mserp_resultvalue);
+                     Set(varLineSelected, true);
+                     Set(varIsOption,
+                         CountRows(Filter('Test variable outcomes (mserp)',
+                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                                          mserp_testid = ThisItem.mserp_qualitytestid,
+                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
+                     Reset(MR_ValueInput)
+
+            - MR_Verdict:
+                Control: Label
+                Properties:
+                  Text: |
+                    =Switch(ThisItem.mserp_testresult,
+                        200000001, "PASS",
+                        200000000, "FAIL", "-")
+                  X: =Parent.TemplateWidth - 104
+                  Y: =8
+                  Width: =92
+                  Height: =26
+                  Size: =10
+                  FontWeight: =FontWeight.Semibold
+                  Align: =Align.Center
+                  VerticalAlign: =VerticalAlign.Middle
+                  Color: |
+                    =Switch(ThisItem.mserp_testresult,
+                        200000001, RGBA(32, 97, 61, 1),
+                        200000000, RGBA(156, 31, 23, 1),
+                        RGBA(107, 125, 132, 1))
+                  Fill: |
+                    =Switch(ThisItem.mserp_testresult,
+                        200000001, RGBA(222, 238, 228, 1),
+                        200000000, RGBA(247, 227, 225, 1),
+                        RGBA(233, 239, 241, 1))
+
+            - MR_RowResult:
+                Control: Label
+                Properties:
+                  Text: |
+                    =If(!IsBlank(ThisItem.mserp_qualitytestvariableoutcomeid),
+                        "Outcome: " & ThisItem.mserp_qualitytestvariableoutcomeid,
+                        "Value: " & ThisItem.mserp_resultvalue)
+                  X: =12
+                  Y: =38
+                  Width: =Parent.TemplateWidth - 24
+                  Height: =22
+                  Size: =11
+                  Color: =RGBA(16, 26, 30, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: |
+                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
+                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
+                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
+                     Set(varLineValue, ThisItem.mserp_resultvalue);
+                     Set(varLineSelected, true);
+                     Set(varIsOption,
+                         CountRows(Filter('Test variable outcomes (mserp)',
+                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                                          mserp_testid = ThisItem.mserp_qualitytestid,
+                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
+                     Reset(MR_ValueInput)
+
+            - MR_RowMeta:
+                Control: Label
+                Properties:
+                  Text: |
+                    ="seq " & ThisItem.mserp_qualityordersequencenumber &
+                     "   -   line " & ThisItem.mserp_resultlinenumber
+                  X: =12
+                  Y: =60
+                  Width: =Parent.TemplateWidth - 24
+                  Height: =20
+                  Size: =9
+                  Color: =RGBA(107, 125, 132, 1)
+                  OnSelect: |
+                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
+                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
+                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
+                     Set(varLineValue, ThisItem.mserp_resultvalue);
+                     Set(varLineSelected, true);
+                     Set(varIsOption,
+                         CountRows(Filter('Test variable outcomes (mserp)',
+                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                                          mserp_testid = ThisItem.mserp_qualitytestid,
+                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
+                     Reset(MR_ValueInput)
+
+            - MR_RowRule:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =83
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
+      # ------------------------------------------------------------------ editor
+      - MR_EdPanel:
+          Control: Rectangle
+          Properties:
+            X: =12
+            Y: =574
+            Width: =Parent.Width - 24
+            Height: =474
+            Fill: =RGBA(255, 255, 255, 1)
+
+      - MR_EdPrompt:
+          Control: Label
+          Properties:
+            Text: ="Tap a test above to record its result."
+            Visible: =!varLineSelected
+            X: =24
+            Y: =574
+            Width: =Parent.Width - 48
+            Height: =474
+            Size: =12
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MR_EdTitle:
+          Control: Label
+          Properties:
+            Text: =varLineTest
+            Visible: =varLineSelected
+            X: =24
+            Y: =586
+            Width: =Parent.Width - 48
+            Height: =28
+            Size: =14
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(16, 26, 30, 1)
+
+      - MR_EdKind:
+          Control: Label
+          Properties:
+            Text: |
+              ="seq " & varLineSeq & "   -   " &
+               If(varIsOption, "choose an outcome", "enter a measured value")
+            Visible: =varLineSelected
+            X: =24
+            Y: =614
+            Width: =Parent.Width - 48
+            Height: =22
+            Size: =10
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MR_ValueInput:
+          Control: Classic/TextInput
+          Properties:
+            Default: =varLineValue
+            HintText: ="measured value"
+            Format: =TextFormat.Number
+            Visible: =varLineSelected && !varIsOption
+            X: =24
+            Y: =644
+            Width: =Parent.Width - 48
+            Height: =52
+            Size: =16
+            Align: =Align.Right
+
+      - MR_OutcomeGallery:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            Visible: =varLineSelected && varIsOption
+            Items: |
+              =SortByColumns(
+                 Filter('Test variable outcomes (mserp)',
+                        mserp_testgroupid = varQO.mserp_qualitytestgroupid,
+                        mserp_testid = varLineTest,
+                        mserp_dataareaid = varQO.mserp_dataareaid),
+                 "mserp_variableoutcomeid", SortOrder.Ascending)
+            X: =24
+            Y: =644
+            Width: =Parent.Width - 48
+            Height: =176
+            TemplateSize: =56
+            TemplatePadding: =0
+            ShowScrollbar: =true
+            OnSelect: =Set(varLineOutcome, ThisItem.mserp_variableoutcomeid)
+          Children:
+            - MR_OcFill:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =0
+                  Width: =Parent.TemplateWidth
+                  Height: =55
+                  Fill: |
+                    =If(ThisItem.mserp_variableoutcomeid = varLineOutcome,
+                        RGBA(222, 238, 228, 1), RGBA(244, 246, 247, 1))
+
+            - MR_OcName:
+                Control: Label
+                Properties:
+                  Text: =ThisItem.mserp_variableoutcomeid
+                  X: =12
+                  Y: =4
+                  Width: =Parent.TemplateWidth - 130
+                  Height: =46
+                  Size: =14
+                  FontWeight: =FontWeight.Semibold
+                  Color: =RGBA(13, 98, 115, 1)
+                  VerticalAlign: =VerticalAlign.Middle
+                  OnSelect: =Set(varLineOutcome, ThisItem.mserp_variableoutcomeid)
+
+            - MR_OcImplied:
+                Control: Label
+                Properties:
+                  # 200000001 is an accepting outcome, 200000000 a rejecting one.
+                  Text: |
+                    =If(ThisItem.mserp_outcomestatus = 200000001, "pass", "fail")
+                  X: =Parent.TemplateWidth - 118
+                  Y: =4
+                  Width: =106
+                  Height: =46
+                  Size: =10
+                  FontWeight: =FontWeight.Semibold
+                  Align: =Align.Center
+                  VerticalAlign: =VerticalAlign.Middle
+                  Color: |
+                    =If(ThisItem.mserp_outcomestatus = 200000001,
+                        RGBA(32, 97, 61, 1), RGBA(156, 31, 23, 1))
+                  OnSelect: =Set(varLineOutcome, ThisItem.mserp_variableoutcomeid)
+
+            - MR_OcRule:
+                Control: Rectangle
+                Properties:
+                  X: =0
+                  Y: =55
+                  Width: =Parent.TemplateWidth
+                  Height: =1
+                  Fill: =RGBA(210, 220, 223, 1)
+
+      - MR_EdCurrent:
+          Control: Label
+          Properties:
+            Text: |
+              ="Currently recorded: " &
+               If(varIsOption,
+                  If(IsBlank(varLineOutcome), "nothing", varLineOutcome),
+                  If(IsBlank(varLineValue), "nothing", varLineValue))
+            Visible: =varLineSelected
+            X: =24
+            Y: =836
+            Width: =Parent.Width - 48
+            Height: =24
+            Size: =10
+            Color: =RGBA(107, 125, 132, 1)
+
+      - MR_SaveButton:
+          Control: Classic/Button
+          Properties:
+            Text: =If(varSaving, "Saving...", "Save to F&O")
+            Visible: =varLineSelected
+            X: =24
+            Y: =868
+            Width: =Parent.Width - 48
+            Height: =56
+            Fill: =RGBA(13, 98, 115, 1)
+            Color: =RGBA(255, 255, 255, 1)
+            Size: =15
+            FontWeight: =FontWeight.Semibold
+            # Disabled while a write is in flight. That is the whole of the double-submit defence
+            # in an online app -- there is no correlation id and no duplicate check, but a direct
+            # Patch is one round trip, so the exposure is a double tap rather than a stuck queue.
+            DisplayMode: |
+              =If(varSaving ||
+                  (varIsOption && IsBlank(varLineOutcome)) ||
+                  (!varIsOption && IsBlank(MR_ValueInput.Text)),
+                  DisplayMode.Disabled, DisplayMode.Edit)
+            OnSelect: |
+              =Set(varSaving, true);
+               Set(varTarget,
+                   LookUp('Quality order line results (mserp)',
+                          mserp_qualityordernumber = varQO.mserp_qualityordernumber &&
+                          mserp_dataareaid = varQO.mserp_dataareaid &&
+                          mserp_qualityordersequencenumber = varLineSeq));
+               If(varIsOption,
+                  Patch('Quality order line results (mserp)', varTarget,
+                        { mserp_qualitytestvariableoutcomeid: varLineOutcome }),
+                  Patch('Quality order line results (mserp)', varTarget,
+                        { mserp_resultvalue: Value(MR_ValueInput.Text) }));
+               Set(varSaving, false);
+               If(IsEmpty(Errors('Quality order line results (mserp)')),
+                  Notify("Saved. F&O recalculated the verdict.", NotificationType.Success),
+                  Notify(First(Errors('Quality order line results (mserp)')).Message,
+                         NotificationType.Error));
+               Refresh('Quality order line results (mserp)')
+
+      - MR_SaveNote:
+          Control: Label
+          Properties:
+            Text: |
+              ="F&O works out Pass or Fail itself from the value or outcome you record. The " &
+               "verdict above updates when the list refreshes."
+            Visible: =varLineSelected
+            X: =24
+            Y: =932
+            Width: =Parent.Width - 48
+            Height: =44
+            Size: =9
+            Color: =RGBA(107, 125, 132, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+      - MR_NoOrder:
+          Control: Label
+          Properties:
+            Text: ="No order selected. Go back and pick a quality order."
+            Visible: =IsBlank(varQO.mserp_qualityordernumber)
+            X: =12
+            Y: =142
+            Width: =Parent.Width - 24
+            Height: =60
+            Fill: =RGBA(248, 235, 214, 1)
+            Color: =RGBA(138, 86, 6, 1)
+            Size: =11
+            FontWeight: =FontWeight.Semibold
+            PaddingLeft: =12
+            VerticalAlign: =VerticalAlign.Middle
