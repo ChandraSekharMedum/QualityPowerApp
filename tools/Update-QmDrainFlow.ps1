@@ -118,10 +118,17 @@ $definition = [ordered]@{
         Exit_if_not_queued = [ordered]@{
             runAfter   = [ordered]@{}
             type       = 'If'
+            # MUST check operationtype as well as status. All three drain flows trigger on every
+            # outbox row and exit early for the ones that are not theirs -- but this flow, written
+            # before operationtype existed, only checked the status. So it claimed NC rows
+            # (type 2) and photo rows (type 3) too, failed on their missing 'Lines' array, and
+            # flagged them ATTENTION, racing the flow that had just handled them correctly.
+            # Symptom: a photo that reached F&O showing as ATTENTION in the queue.
             expression = [ordered]@{
-                not = [ordered]@{
-                    equals = @("@triggerOutputs()?['body/cog_outboxstatus']", 2)
-                }
+                or = @(
+                    [ordered]@{ not = [ordered]@{ equals = @("@triggerOutputs()?['body/cog_outboxstatus']", 2) } },
+                    [ordered]@{ not = [ordered]@{ equals = @("@triggerOutputs()?['body/cog_operationtype']", 1) } }
+                )
             }
             actions = [ordered]@{
                 Stop = [ordered]@{

@@ -13,8 +13,11 @@
 # 1 MiB and stuffing that into cog_payload would make the queue unreadable and every flow run
 # expensive to inspect. The flow fetches the image from cog_attachment instead.
 #
-# Target is POWERAPPFILESAVINGENTITY, proven against a quality order test line on 2026-08-17:
-#   mserp_formname must be 20 characters or fewer -- 'InventQualityOrder' (18) is accepted.
+# Target is POWERAPPFILESAVINGENTITY. Proven by probe 2026-08-18 (docs\ATTACHMENTS.md 2a):
+#   mserp_formname must be EXACTLY 'Quality'. The field caps at 20 characters, which made
+#     'InventQualityOrder' look fine -- F&O accepts it, consumes the row, and attaches nothing.
+#   The row must identify a test line (TestId + TestSequence + LineNum) or F&O never processes it.
+#   mserp_tablerefid is irrelevant; '0000' is what both apps send.
 #   mserp_imagevarchar accepts exactly 1,048,576 base64 characters and rejects more.
 #
 # Separate flow from the results and NC drains for the same reason as those: the trigger cannot
@@ -226,7 +229,11 @@ $definition = [ordered]@{
                                     'item/mserp_linenum'             = ('@float(coalesce(' + (A 'cog_linenum') + ', 0))')
                                     'item/mserp_filename'            = ('@coalesce(' + (A 'cog_filename') + ", 'photo.jpg')")
                                     # 20 characters is the cap on this field.
-                                    'item/mserp_formname'            = 'InventQualityOrder'
+                                    # PROVEN 2026-08-18: F&O only attaches the file when
+                                    # FormName is exactly 'Quality'. With 'InventQualityOrder' it
+                                    # accepts the row, consumes it within seconds, and attaches
+                                    # nothing -- a silent no-op. See docs\ATTACHMENTS.md 2a.
+                                    'item/mserp_formname'            = 'Quality'
                                     'item/mserp_imagevarchar'        = ('@' + (A 'cog_base64'))
                                     'item/mserp_dataareaid'          = ('@' + (P 'Company'))
                                 }
