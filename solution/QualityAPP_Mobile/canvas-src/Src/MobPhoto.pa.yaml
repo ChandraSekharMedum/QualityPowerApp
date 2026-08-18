@@ -1,9 +1,13 @@
 # ************************************************************************************************
 # Quality App Mobile -- photograph a defect.  Phone layout, 640 x 1136 portrait.
 #
-# Writes straight to POWERAPPFILESAVINGENTITY. F&O then picks the staged file up on a periodic
-# job -- measured at about 13.5 minutes -- and turns it into a document attachment. So SENT here
-# means F&O has taken the file, not that it is visible in F&O yet.
+# Writes straight to POWERAPPFILESAVINGENTITY. The write itself takes about a second.
+#
+# A probe row was observed disappearing from the staging entity after about 13.5 minutes, which
+# was initially read as "F&O attaches it on a periodic job". That was wrong: the disappearance is
+# the staging row being cleaned up, which is not the same event as the attachment being created.
+# The demo app in usdemo01 uses this same entity and its attachments appear immediately, so F&O
+# creates the attachment on insert.
 #
 # TWO DETAILS COPIED FROM THE WORKING DEMO APP IN usdemo01, both re-probed here:
 #   ImageVarchar keeps the whole "data:image/jpeg;base64,..." string; only the quotes JSON() adds
@@ -293,8 +297,7 @@ Screens:
                    mserp_dataareaid: varQO.mserp_dataareaid });
                Set(varSending, false);
                If(IsEmpty(Errors('PowerAppFileSavingEntity (mserp)')),
-                  Notify("Photo sent. F&O attaches it on its next run, about 15 minutes.",
-                         NotificationType.Success);
+                  Notify("Photo sent to F&O.", NotificationType.Success);
                   Set(varPhoto, Blank());
                   Set(varB64, "");
                   Reset(MP_FileName),
@@ -305,8 +308,8 @@ Screens:
           Control: Label
           Properties:
             Text: |
-              ="F&O takes the file immediately but attaches it on a periodic job, so allow about " &
-               "15 minutes before looking for it on the quality order."
+              ="The photo goes to F&O as soon as you send it. If it is not on the quality order " &
+               "straight away, refresh the page in F&O."
             X: =12
             Y: =1038
             Width: =Parent.Width - 24

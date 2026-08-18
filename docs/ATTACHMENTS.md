@@ -52,28 +52,35 @@ for the exception, not the rule.
 
 ---
 
-## 3. F&O consumes staged rows on a timer — about 15 minutes
+## 3. Staged rows disappear after ~13.5 minutes — but that is NOT the attachment appearing
 
-This is the finding most likely to generate a support call, so it is worth stating plainly.
+**Corrected 2026-08-18.** This section previously claimed F&O attaches photos on a ~15 minute job.
+That was a misreading and it reached the app's on-screen text before being caught.
 
-A probe row was created and polled every 30 seconds:
+What was actually measured: a probe row was created and polled every 30 seconds.
 
 ```
   still present at 2, 4, 6, 8, 10, 12 min
-  CONSUMED after about 13.5 minutes (404)
+  GONE after about 13.5 minutes (404)
 ```
 
-`POWERAPPFILESAVINGENTITY` is a **staging** entity. F&O runs a periodic job that picks up staged
-files, turns them into document attachments, and deletes the staging row. Consequences:
+The row disappearing is the **staging row being cleaned up**. That is a different event from the
+attachment being created, and nothing in the measurement links the two. The write itself returns
+in about a second.
 
-- **`ACCEPTED` in the app means F&O took the file, not that it is visible in F&O yet.** The
-  screen says `ACCEPTED`, not `ATTACHED`, and tells the inspector to allow about 15 minutes.
-- **The staging entity is not a record of what is attached.** Query it and you see only what has
-  not been processed yet. That is why `cog_Attachment` keeps the app's own record, and why the
-  "Photos for this order" list reads from Dataverse rather than F&O.
+**The attachment is created immediately.** The demo app in `usdemo01` writes to this same entity
+and its attachments show up straight away — reported by the user after testing it. So F&O
+processes the insert synchronously and merely tidies the staging row later.
 
-An earlier read of the staging entity returned zero rows while rows demonstrably existed, then
-returned them correctly minutes later. Treat reads of this entity as eventually consistent.
+Two things that remain true regardless:
+
+- **The staging entity is not a record of what is attached.** Query it and you see only rows not
+  yet cleaned up.
+- Reads of it are eventually consistent — one read returned zero rows while rows demonstrably
+  existed, then returned them correctly minutes later.
+
+**Lesson worth keeping:** "the row vanished" answers *when the row vanished*, not *when the work
+completed*. Do not put an inferred timing in front of a user as if it were measured.
 
 ---
 
@@ -83,12 +90,12 @@ returned them correctly minutes later. Treat reads of this entity as eventually 
 `DocuRefEntity`, `DocuValueEntity` or `DocumentAttachmentEntity` in the catalogue — all four
 candidate names 404 — so this cannot be confirmed over OData by any means available.
 
-The evidence is strong but indirect: the write is accepted, the payload persists, and the row is
-consumed by an F&O job on a schedule, which is precisely what a staging entity does when it is
-working.
+The evidence is strong but indirect: the write is accepted, the payload persists, and the staging
+row is later cleaned up — which is what a staging entity does once it has been processed.
 
-**Someone needs to open quality order `000121` in the F&O client and look at Attachments once.**
-Until that happens, treat the feature as proven up to F&O's door and unproven inside it.
+The strongest evidence is external: the demo app in `usdemo01` writes to this same entity and its
+attachments appear on the record immediately. Whether our writes land the same way still wants one
+visual check in the F&O client.
 
 ---
 
@@ -101,7 +108,7 @@ Camera capture
   -> cog_Attachment row  +  cog_Outbox row (operationtype 3)
   -> cog_QM_DrainAttachment
   -> POWERAPPFILESAVINGENTITY
-  -> F&O periodic job  ->  document attachment
+  -> F&O creates the document attachment on insert
 ```
 
 **Why base64 text rather than a Dataverse file or image column.** The F&O target takes base64
