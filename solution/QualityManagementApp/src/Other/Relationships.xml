@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <EntityRelationship Name="business_unit_cog_account" />
+  <EntityRelationship Name="business_unit_cog_attachment" />
+  <EntityRelationship Name="business_unit_cog_item" />
   <EntityRelationship Name="business_unit_cog_outbox" />
   <EntityRelationship Name="business_unit_cog_problemtype" />
   <EntityRelationship Name="business_unit_cog_qualityorder" />
@@ -15,6 +17,10 @@
   <EntityRelationship Name="FileAttachment_cog_ResultEntry_cog_Photo" />
   <EntityRelationship Name="lk_cog_account_createdby" />
   <EntityRelationship Name="lk_cog_account_modifiedby" />
+  <EntityRelationship Name="lk_cog_attachment_createdby" />
+  <EntityRelationship Name="lk_cog_attachment_modifiedby" />
+  <EntityRelationship Name="lk_cog_item_createdby" />
+  <EntityRelationship Name="lk_cog_item_modifiedby" />
   <EntityRelationship Name="lk_cog_outbox_createdby" />
   <EntityRelationship Name="lk_cog_outbox_modifiedby" />
   <EntityRelationship Name="lk_cog_problemtype_createdby" />
@@ -30,6 +36,8 @@
   <EntityRelationship Name="lk_cog_testoutcome_createdby" />
   <EntityRelationship Name="lk_cog_testoutcome_modifiedby" />
   <EntityRelationship Name="owner_cog_account" />
+  <EntityRelationship Name="owner_cog_attachment" />
+  <EntityRelationship Name="owner_cog_item" />
   <EntityRelationship Name="owner_cog_outbox" />
   <EntityRelationship Name="owner_cog_problemtype" />
   <EntityRelationship Name="owner_cog_qualityorder" />
@@ -38,6 +46,8 @@
   <EntityRelationship Name="owner_cog_resultsheet" />
   <EntityRelationship Name="owner_cog_testoutcome" />
   <EntityRelationship Name="team_cog_account" />
+  <EntityRelationship Name="team_cog_attachment" />
+  <EntityRelationship Name="team_cog_item" />
   <EntityRelationship Name="team_cog_outbox" />
   <EntityRelationship Name="team_cog_problemtype" />
   <EntityRelationship Name="team_cog_qualityorder" />
@@ -46,6 +56,8 @@
   <EntityRelationship Name="team_cog_resultsheet" />
   <EntityRelationship Name="team_cog_testoutcome" />
   <EntityRelationship Name="user_cog_account" />
+  <EntityRelationship Name="user_cog_attachment" />
+  <EntityRelationship Name="user_cog_item" />
   <EntityRelationship Name="user_cog_outbox" />
   <EntityRelationship Name="user_cog_problemtype" />
   <EntityRelationship Name="user_cog_qualityorder" />

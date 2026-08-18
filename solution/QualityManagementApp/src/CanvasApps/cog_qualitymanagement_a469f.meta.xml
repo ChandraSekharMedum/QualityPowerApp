@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>cog_qualitymanagement_a469f</Name>
-  <AppVersion>2026-08-17T15:06:00Z</AppVersion>
+  <AppVersion>2026-08-17T16:14:35Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>3.26074.11.0</CreatedByClientVersion>
   <MinClientVersion>3.26074.11.0</MinClientVersion>
@@ -11,7 +11,7 @@
   <BackgroundColor>RGBA(0,176,240,1)</BackgroundColor>
   <DisplayName>Quality Management</DisplayName>
   <Description>Streamline quality assurance processes with the Quality Management app. Monitor and manage quality standards efficiently as the app evolves. Designed to support ongoing improvements, this solution helps users oversee quality initiatives and maintain compliance within their organization.</Description>
-  <CommitMessage xsi:nil="true"></CommitMessage>
+  <CommitMessage></CommitMessage>
   <Publisher></Publisher>
   <AuthorizationReferences>[]</AuthorizationReferences>
   <ConnectionReferences>{}</ConnectionReferences>
@@ -24,7 +24,7 @@
   <AdminControlBypassConsent>0</AdminControlBypassConsent>
   <EmbeddedApp xsi:nil="true"></EmbeddedApp>
   <IntroducedVersion>1.0</IntroducedVersion>
-  <CdsDependencies>{"cdsdependencies":[{"logicalname":"cog_qualityorder","componenttype":1},{"logicalname":"cog_qualitytestline","componenttype":1},{"logicalname":"cog_testoutcome","componenttype":1},{"logicalname":"cog_resultsheet","componenttype":1},{"logicalname":"cog_resultentry","componenttype":1},{"logicalname":"cog_outbox","componenttype":1},{"logicalname":"cog_problemtype","componenttype":1},{"logicalname":"cog_account","componenttype":1}]}</CdsDependencies>
+  <CdsDependencies>{"cdsdependencies":[{"componenttype":1,"logicalname":"cog_qualityorder"},{"componenttype":1,"logicalname":"cog_qualitytestline"},{"componenttype":1,"logicalname":"cog_testoutcome"},{"componenttype":1,"logicalname":"cog_resultsheet"},{"componenttype":1,"logicalname":"cog_resultentry"},{"componenttype":1,"logicalname":"cog_outbox"},{"componenttype":1,"logicalname":"cog_problemtype"},{"componenttype":1,"logicalname":"cog_account"}]}</CdsDependencies>
   <IsCustomizable>1</IsCustomizable>
   <BackgroundImageUri>/CanvasApps/cog_qualitymanagement_a469f_BackgroundImageUri</BackgroundImageUri>
   <DocumentUri>/CanvasApps/cog_qualitymanagement_a469f_DocumentUri.msapp</DocumentUri>

@@ -1,0 +1,369 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "cog_QMConnRef_Dataverse": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cog_QMConnRef_Dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_an_outbox_row_is_created": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cog_outbox",
+              "subscriptionRequest/scope": 4
+            }
+          }
+        }
+      },
+      "actions": {
+        "Exit_unless_a_queued_attachment": {
+          "runAfter": {},
+          "type": "If",
+          "expression": {
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_outboxstatus']",
+                    2
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_operationtype']",
+                    3
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Stop": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          }
+        },
+        "Claim_the_outbox_row": {
+          "runAfter": {
+            "Exit_unless_a_queued_attachment": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+              "item/cog_outboxstatus": 3,
+              "item/cog_attempts": "@add(coalesce(triggerOutputs()?['body/cog_attempts'], 0), 1)"
+            }
+          }
+        },
+        "Check_for_an_already_confirmed_twin": {
+          "runAfter": {
+            "Claim_the_outbox_row": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "$select": "cog_outboxid,cog_processedon",
+              "$filter": "@concat('cog_correlationid eq ''', triggerOutputs()?['body/cog_correlationid'], ''' and cog_outboxstatus eq 4 and cog_outboxid ne ', triggerOutputs()?['body/cog_outboxid'])",
+              "$top": 1
+            }
+          }
+        },
+        "Route_duplicate_or_process": {
+          "runAfter": {
+            "Check_for_an_already_confirmed_twin": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "greater": [
+              "@length(outputs('Check_for_an_already_confirmed_twin')?['body/value'])",
+              0
+            ]
+          },
+          "actions": {
+            "Mark_as_duplicate": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord"
+                },
+                "parameters": {
+                  "entityName": "cog_outboxes",
+                  "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                  "item/cog_outboxstatus": 6,
+                  "item/cog_processedon": "@utcNow()",
+                  "item/cog_lasterror": "@concat('Skipped: correlation ', triggerOutputs()?['body/cog_correlationid'], ' was already confirmed')"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Process_the_attachment": {
+                "runAfter": {},
+                "type": "Scope",
+                "actions": {
+                  "Parse_payload": {
+                    "runAfter": {},
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@triggerOutputs()?['body/cog_payload']",
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "Operation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "CorrelationId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "Company": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Read_the_attachment": {
+                    "runAfter": {
+                      "Parse_payload": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "ListRecords"
+                      },
+                      "parameters": {
+                        "entityName": "cog_attachments",
+                        "$select": "cog_attachmentid,cog_base64,cog_filename,cog_qualityordernumber,cog_testid,cog_testsequence,cog_linenum",
+                        "$filter": "@concat('cog_correlationid eq ''', triggerOutputs()?['body/cog_correlationid'], '''')",
+                        "$top": 1
+                      }
+                    }
+                  },
+                  "Fail_if_no_attachment_row": {
+                    "runAfter": {
+                      "Read_the_attachment": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "If",
+                    "expression": {
+                      "equals": [
+                        "@length(outputs('Read_the_attachment')?['body/value'])",
+                        0
+                      ]
+                    },
+                    "actions": {
+                      "No_attachment_found": {
+                        "runAfter": {},
+                        "type": "Terminate",
+                        "inputs": {
+                          "runStatus": "Failed",
+                          "runError": {
+                            "code": "AttachmentMissing",
+                            "message": "No cog_attachment row carries this correlation id."
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Create_the_staged_file": {
+                    "runAfter": {
+                      "Fail_if_no_attachment_row": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "CreateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "mserp_powerappfilesavingentities",
+                        "item/mserp_tablerefid": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_qualityordernumber']",
+                        "item/mserp_displayordernumber": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_qualityordernumber']",
+                        "item/mserp_testid": "@coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_testid'], '')",
+                        "item/mserp_testsequence": "@int(coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_testsequence'], 0))",
+                        "item/mserp_linenum": "@float(coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_linenum'], 0))",
+                        "item/mserp_filename": "@coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_filename'], 'photo.jpg')",
+                        "item/mserp_formname": "InventQualityOrder",
+                        "item/mserp_imagevarchar": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_base64']",
+                        "item/mserp_dataareaid": "@body('Parse_payload')?['Company']"
+                      }
+                    }
+                  },
+                  "Mark_the_attachment_confirmed": {
+                    "runAfter": {
+                      "Create_the_staged_file": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "UpdateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "cog_attachments",
+                        "recordId": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_attachmentid']",
+                        "item/cog_attachstatus": 4
+                      }
+                    }
+                  }
+                }
+              },
+              "Confirm_the_outbox_row": {
+                "runAfter": {
+                  "Process_the_attachment": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 4,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": ""
+                  }
+                }
+              },
+              "Flag_needs_attention": {
+                "runAfter": {
+                  "Process_the_attachment": [
+                    "Failed",
+                    "TimedOut",
+                    "Skipped"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 5,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": "@substring(string(result('Process_the_attachment')), 0, min(3900, length(string(result('Process_the_attachment')))))"
+                  }
+                }
+              },
+              "Flag_the_attachment_row": {
+                "runAfter": {
+                  "Process_the_attachment": [
+                    "Failed",
+                    "TimedOut",
+                    "Skipped"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_attachments",
+                    "recordId": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_attachmentid']",
+                    "item/cog_attachstatus": 5
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
