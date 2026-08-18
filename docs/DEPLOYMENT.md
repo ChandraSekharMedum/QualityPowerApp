@@ -2,10 +2,10 @@
 
 **QM-DEP-001 · 2026-08-18**
 
-Covers `QualityAPP_Mobile` — the online phone app. The offline tablet app
-(`QualityManagementApp`) is a separate solution with a much larger footprint; see §9.
+Covers `QualityAPP_Mobile` — the online phone app — and nothing else. The offline tablet app is
+a separate solution and is deliberately out of scope here.
 
-Everything here was read from the live `cus-con-sandbox` environment, not from memory.
+Everything below was read from the live `cus-con-sandbox` environment, not from memory.
 
 ---
 
@@ -192,20 +192,7 @@ Step 6 is the one that cannot be skipped or automated.
 
 ---
 
-## 9. If the tablet app is also being deployed
-
-`QualityManagementApp` is a separate, much larger solution: 38 entity components, 5 Power
-Automate flows, 10 custom `cog_` tables, 2 connection references, 1 canvas app. It has its own
-requirements — connection references must be rebound after import, and **flows must be
-deactivated and reactivated after every import or their Dataverse triggers silently stop
-firing** (`tools\Repair-FlowTriggers.ps1`).
-
-It is currently parked. If the phone app supersedes it, retire it deliberately rather than
-deploying both.
-
----
-
-## 10. Known constraints to tell the business
+## 9. Known constraints to tell the business
 
 | Constraint | Detail |
 |---|---|
