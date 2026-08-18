@@ -147,6 +147,11 @@ Write-Output "=== 7. verify the data sources survived the import ==="
 $verifyZip = "$work\verify.zip"
 & pac solution export --name $SolutionName --path $verifyZip --overwrite @envArg
 $verifyDir = "$work\verify"
+# The top-of-script clean uses -ErrorAction SilentlyContinue and can leave this directory behind,
+# and ExtractToDirectory throws rather than overwriting. Remove it outright, or a stale verify
+# folder fails the run AFTER a perfectly good import -- which reads as a failed publish when the
+# publish actually worked.
+if (Test-Path $verifyDir) { Remove-Item $verifyDir -Recurse -Force -ErrorAction SilentlyContinue }
 New-Item -ItemType Directory -Force -Path $verifyDir | Out-Null
 [System.IO.Compression.ZipFile]::ExtractToDirectory($verifyZip, $verifyDir)
 $after = Get-ChildItem "$verifyDir\CanvasApps" -Filter '*.msapp' | Select-Object -First 1
