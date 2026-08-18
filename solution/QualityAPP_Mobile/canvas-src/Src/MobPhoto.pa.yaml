@@ -249,6 +249,10 @@ Screens:
                   IsBlank(varQO.mserp_qualityordernumber) ||
                   !varLineSelected,
                   DisplayMode.Disabled, DisplayMode.Edit)
+            # On success it returns to the tests screen. Reset(MP_AddMedia) matters as much as the
+            # navigation: without it the control keeps the old picture, so coming back to attach a
+            # second photo starts with the previous one still loaded.
+            #
             # NEVER put a # comment inside the formula below. "OnSelect: |" is a YAML literal
             # block, so everything indented under it is Power Fx source, and Power Fx has no #
             # comment. Doing that produced a malformed formula and a button that silently did
@@ -279,10 +283,12 @@ Screens:
                    mserp_dataareaid: varQO.mserp_dataareaid });
                Set(varSending, false);
                If(IsEmpty(Errors('PowerAppFileSavingEntity (mserp)')),
-                  Notify("Photo sent to F&O.", NotificationType.Success);
+                  Notify("Photo attached to " & Trim(varLineTest) & ".", NotificationType.Success);
                   Set(varPhoto, Blank());
                   Set(varB64, "");
-                  Reset(MP_FileName),
+                  Reset(MP_FileName);
+                  Reset(MP_AddMedia);
+                  Navigate(MobResults, ScreenTransition.None),
                   Notify(First(Errors('PowerAppFileSavingEntity (mserp)')).Message,
                          NotificationType.Error))
 
