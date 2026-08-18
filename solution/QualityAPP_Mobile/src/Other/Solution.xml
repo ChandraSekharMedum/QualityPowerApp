@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.2.26072.150" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26072.150" OrganizationSchemaType="Full" CRMServerServiceabilityVersion="9.2.26072.00150">
+  <SolutionManifest>
+    <UniqueName>QualityAPP_Mobile</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Quality App Mobile" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions />
+    <Version>0.1.0.0</Version>
+    <Managed>2</Managed>
+    <Publisher>
+      <UniqueName>ColumbusGlobal</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="ColumbusGlobal" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="ColumbusGlobal" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>cog</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>76907</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="mserp_inventqualityorderheaderentity" behavior="1" />
+      <RootComponent type="1" schemaName="mserp_inventqualityorderlineresultentity" behavior="1" />
+      <RootComponent type="1" schemaName="mserp_powerappfilesavingentity" behavior="1" />
+      <RootComponent type="1" schemaName="mserp_powerappinventqolineentity" behavior="1" />
+      <RootComponent type="1" schemaName="mserp_powerappsinventtestvariableoutcomeentity" behavior="1" />
+      <RootComponent type="300" schemaName="cog_qualityappmobile_33e3d" behavior="0" />
+    </RootComponents>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderheaderentity" displayName="Quality orders (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="1" schemaName="mserp_inventqualityorderheaderentity" displayName="Quality orders (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderheaderentity" displayName="Quality orders (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderlineentitypowerapp" displayName="Quality order lines (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappfilesavingentity" displayName="PowerAppFileSavingEntity (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="1" schemaName="mserp_powerappfilesavingentity" displayName="PowerAppFileSavingEntity (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappfilesavingentity" displayName="PowerAppFileSavingEntity (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="1" schemaName="mserp_powerappinventqolineentity" displayName="Quality order lines (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappsinventtestvariableoutcomeentity" displayName="Test variable outcomes (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="1" schemaName="mserp_powerappsinventtestvariableoutcomeentity" displayName="Test variable outcomes (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_powerappsinventtestvariableoutcomeentity" displayName="Test variable outcomes (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="300" schemaName="cog_qualityappmobile_33e3d" displayName="Quality App Mobile" />
+      </MissingDependency>
+    </MissingDependencies>
+  </SolutionManifest>
+</ImportExportXml>
