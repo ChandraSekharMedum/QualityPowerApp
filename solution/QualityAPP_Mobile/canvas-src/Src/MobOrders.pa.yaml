@@ -126,11 +126,16 @@ Screens:
             - MO_Status:
                 Control: Label
                 Properties:
+                  # A Dataverse CHOICE column does not compare to a number client-side, so the old
+                  # Switch on 200000000 returned blank -- blank text on a blank fill is what
+                  # rendered as a solid black chip. The *name companion columns exist in metadata
+                  # but F&O leaves them empty, so they are no help. Text() coerces a choice to its
+                  # label; the numeric branches stay as a fallback in case it yields the raw value.
                   Text: |
-                    =Switch(ThisItem.mserp_qualityorderstatus,
-                        200000000, "OPEN",
-                        200000001, "FAIL",
-                        200000002, "PASS", "-")
+                    =Switch(Text(ThisItem.mserp_qualityorderstatus),
+                        "Open", "OPEN", "200000000", "OPEN",
+                        "Fail", "FAIL", "200000001", "FAIL",
+                        "Pass", "PASS", "200000002", "PASS", "-")
                   X: =Parent.TemplateWidth - 116
                   Y: =8
                   Width: =104
@@ -140,14 +145,14 @@ Screens:
                   Align: =Align.Center
                   VerticalAlign: =VerticalAlign.Middle
                   Color: |
-                    =Switch(ThisItem.mserp_qualityorderstatus,
-                        200000001, RGBA(156, 31, 23, 1),
-                        200000002, RGBA(32, 97, 61, 1),
+                    =Switch(Text(ThisItem.mserp_qualityorderstatus),
+                        "Fail", RGBA(156, 31, 23, 1), "200000001", RGBA(156, 31, 23, 1),
+                        "Pass", RGBA(32, 97, 61, 1), "200000002", RGBA(32, 97, 61, 1),
                         RGBA(138, 86, 6, 1))
                   Fill: |
-                    =Switch(ThisItem.mserp_qualityorderstatus,
-                        200000001, RGBA(247, 227, 225, 1),
-                        200000002, RGBA(222, 238, 228, 1),
+                    =Switch(Text(ThisItem.mserp_qualityorderstatus),
+                        "Fail", RGBA(247, 227, 225, 1), "200000001", RGBA(247, 227, 225, 1),
+                        "Pass", RGBA(222, 238, 228, 1), "200000002", RGBA(222, 238, 228, 1),
                         RGBA(248, 235, 214, 1))
                   OnSelect: |
                     =Set(varQO, ThisItem);

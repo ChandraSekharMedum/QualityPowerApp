@@ -213,10 +213,12 @@ Screens:
             - MR_Verdict:
                 Control: Label
                 Properties:
+                  # Same choice-column trap as the order status chip: comparing a Dataverse choice
+                  # to a number client-side yields blank, which renders as a black box.
                   Text: |
-                    =Switch(ThisItem.mserp_testresult,
-                        200000001, "PASS",
-                        200000000, "FAIL", "-")
+                    =Switch(Text(ThisItem.mserp_testresult),
+                        "Pass", "PASS", "200000001", "PASS",
+                        "Fail", "FAIL", "200000000", "FAIL", "-")
                   X: =Parent.TemplateWidth - 104
                   Y: =8
                   Width: =92
@@ -226,14 +228,14 @@ Screens:
                   Align: =Align.Center
                   VerticalAlign: =VerticalAlign.Middle
                   Color: |
-                    =Switch(ThisItem.mserp_testresult,
-                        200000001, RGBA(32, 97, 61, 1),
-                        200000000, RGBA(156, 31, 23, 1),
+                    =Switch(Text(ThisItem.mserp_testresult),
+                        "Pass", RGBA(32, 97, 61, 1), "200000001", RGBA(32, 97, 61, 1),
+                        "Fail", RGBA(156, 31, 23, 1), "200000000", RGBA(156, 31, 23, 1),
                         RGBA(107, 125, 132, 1))
                   Fill: |
-                    =Switch(ThisItem.mserp_testresult,
-                        200000001, RGBA(222, 238, 228, 1),
-                        200000000, RGBA(247, 227, 225, 1),
+                    =Switch(Text(ThisItem.mserp_testresult),
+                        "Pass", RGBA(222, 238, 228, 1), "200000001", RGBA(222, 238, 228, 1),
+                        "Fail", RGBA(247, 227, 225, 1), "200000000", RGBA(247, 227, 225, 1),
                         RGBA(233, 239, 241, 1))
 
             - MR_RowResult:
@@ -479,9 +481,12 @@ Screens:
             - MR_OcImplied:
                 Control: Label
                 Properties:
-                  # 200000001 is an accepting outcome, 200000000 a rejecting one.
+                  # 200000001 Pass, 200000000 Fail. Choice column, so match on Text() with the
+                  # numeric form kept as a fallback.
                   Text: |
-                    =If(ThisItem.mserp_outcomestatus = 200000001, "pass", "fail")
+                    =Switch(Text(ThisItem.mserp_outcomestatus),
+                        "Pass", "pass", "200000001", "pass",
+                        "Fail", "fail", "200000000", "fail", "")
                   X: =Parent.TemplateWidth - 118
                   Y: =4
                   Width: =106
@@ -491,8 +496,9 @@ Screens:
                   Align: =Align.Center
                   VerticalAlign: =VerticalAlign.Middle
                   Color: |
-                    =If(ThisItem.mserp_outcomestatus = 200000001,
-                        RGBA(32, 97, 61, 1), RGBA(156, 31, 23, 1))
+                    =Switch(Text(ThisItem.mserp_outcomestatus),
+                        "Pass", RGBA(32, 97, 61, 1), "200000001", RGBA(32, 97, 61, 1),
+                        RGBA(156, 31, 23, 1))
                   OnSelect: =Set(varLineOutcome, ThisItem.mserp_variableoutcomeid)
 
             - MR_OcRule:
