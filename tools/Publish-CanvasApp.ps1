@@ -44,6 +44,32 @@ if ($bad -gt 0) { throw "Non-ASCII characters in screen source. They corrupt thr
 Write-Output "  clean"
 
 Write-Output ""
+Write-Output "=== 0b. guard: no '#' comments inside Power Fx formulas ==="
+# "OnSelect: |" is a YAML literal block, so every indented line under it is Power Fx SOURCE.
+# Power Fx has no '#' comment, so a '#' line there silently malforms the formula -- the control
+# then does nothing at all when tapped, with no error anywhere. pack does not catch it and neither
+# does anything else short of opening the app. Comments belong at property level, outside the block.
+$hashBad = 0
+foreach ($f in Get-ChildItem (Join-Path $cvs 'Src') -Filter '*.pa.yaml') {
+    $lines = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8) -split "`r?`n"
+    $inBlock = $false; $blockIndent = 0; $prop = ''
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $l = $lines[$i]
+        if ($l -match '^(\s*)([A-Za-z_]\w*):\s*\|\s*$') { $inBlock = $true; $blockIndent = $matches[1].Length; $prop = $matches[2]; continue }
+        if (-not $inBlock) { continue }
+        if ($l.Trim() -eq '') { continue }
+        $ind = ($l -replace '^(\s*).*$', '$1').Length
+        if ($ind -le $blockIndent) { $inBlock = $false; continue }
+        if ($l -match '^\s*#') {
+            Write-Output ("  {0} line {1}: '#' inside the '{2}' formula -- {3}" -f $f.Name, ($i + 1), $prop, $l.Trim())
+            $hashBad++
+        }
+    }
+}
+if ($hashBad -gt 0) { throw "$hashBad '#' comment line(s) inside Power Fx formulas. Move them above the property -- inside a literal block they become part of the formula and the control stops working silently." }
+Write-Output "  clean"
+
+Write-Output ""
 Write-Output "=== 1. pack canvas source ==="
 $newMsapp = "$work\generated.msapp"
 & pac canvas pack --sources $cvs --msapp $newMsapp --layout SourceCode --overwrite

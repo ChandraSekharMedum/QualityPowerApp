@@ -249,15 +249,21 @@ Screens:
                   IsBlank(varQO.mserp_qualityordernumber) ||
                   !varLineSelected,
                   DisplayMode.Disabled, DisplayMode.Edit)
-            # LineNum is looked up rather than carried in a variable, so the result row stays the
-            # single source of truth for it. mserp_formname caps at 20 characters.
+            # NEVER put a # comment inside the formula below. "OnSelect: |" is a YAML literal
+            # block, so everything indented under it is Power Fx source, and Power Fx has no #
+            # comment. Doing that produced a malformed formula and a button that silently did
+            # nothing when tapped. Comments belong out here, at property level.
+            #
+            # mserp_formname must be "Quality", not "InventQualityOrder": F&O accepts either but
+            # only attaches the file for "Quality" (probe 2026-08-18, PROBE-A vs PROBE-C).
+            # TestId/TestSequence/LineNum are always sent -- without a test line F&O never
+            # processes the row at all. TableRefId is irrelevant; "0000" is what both apps send.
+            # LineNum is looked up so the result row stays the single source of truth for it.
             OnSelect: |
               =Set(varSending, true);
                Patch('PowerAppFileSavingEntity (mserp)', Defaults('PowerAppFileSavingEntity (mserp)'),
                  { mserp_tablerefid: "0000",
                    mserp_displayordernumber: varQO.mserp_qualityordernumber,
-                   # Always sent. The demo app's quality path has no whole-order option -- it
-                   # always identifies a test line, so that is the shape F&O is known to accept.
                    mserp_testid: varLineTest,
                    mserp_testsequence: varLineSeq,
                    mserp_linenum:
@@ -268,11 +274,6 @@ Screens:
                               mserp_qualityordersequencenumber = varLineSeq).mserp_resultlinenumber,
                        0),
                    mserp_filename: MP_FileName.Text,
-                   # "Quality", NOT "InventQualityOrder". FormName tells F&O which context the
-                   # file belongs to. With the wrong value F&O accepted the row, consumed it, and
-                   # bound the file to nothing -- the upload looked successful and no attachment
-                   # ever appeared. The demo app sends "Quality" on the quality path and
-                   # "Non conformance" on the NC path.
                    mserp_formname: "Quality",
                    mserp_imagevarchar: varB64,
                    mserp_dataareaid: varQO.mserp_dataareaid });
