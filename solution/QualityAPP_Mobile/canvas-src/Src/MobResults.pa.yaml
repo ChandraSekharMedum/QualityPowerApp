@@ -171,18 +171,11 @@ Screens:
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
                   # A Rectangle swallows the tap just as a Label does, so the bare areas of the row
                   # are dead without this. On a phone the row is what people tap.
-                  OnSelect: |
-                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
-                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
-                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
-                     Set(varLineValue, ThisItem.mserp_resultvalue);
-                     Set(varLineSelected, true);
-                     Set(varIsOption,
-                         CountRows(Filter('Test variable outcomes (mserp)',
-                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
-                                          mserp_testid = ThisItem.mserp_qualitytestid,
-                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
-                     Reset(MR_ValueInput)
+                  # Raise the GALLERY's selection rather than duplicating the state here. This is
+                  # the demo app's idiom (OnSelect: =Select(Parent)) and it matters for more than
+                  # tidiness: it keeps MR_Gallery.Selected pointing at the row, and that record --
+                  # a real one from the data source -- is what Save patches.
+                  OnSelect: =Select(Parent)
 
             - MR_TestName:
                 Control: Label
@@ -197,18 +190,11 @@ Screens:
                   Underline: =true
                   Color: =RGBA(13, 98, 115, 1)
                   VerticalAlign: =VerticalAlign.Middle
-                  OnSelect: |
-                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
-                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
-                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
-                     Set(varLineValue, ThisItem.mserp_resultvalue);
-                     Set(varLineSelected, true);
-                     Set(varIsOption,
-                         CountRows(Filter('Test variable outcomes (mserp)',
-                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
-                                          mserp_testid = ThisItem.mserp_qualitytestid,
-                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
-                     Reset(MR_ValueInput)
+                  # Raise the GALLERY's selection rather than duplicating the state here. This is
+                  # the demo app's idiom (OnSelect: =Select(Parent)) and it matters for more than
+                  # tidiness: it keeps MR_Gallery.Selected pointing at the row, and that record --
+                  # a real one from the data source -- is what Save patches.
+                  OnSelect: =Select(Parent)
 
             - MR_Verdict:
                 Control: Label
@@ -252,18 +238,11 @@ Screens:
                   Size: =11
                   Color: =RGBA(16, 26, 30, 1)
                   VerticalAlign: =VerticalAlign.Middle
-                  OnSelect: |
-                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
-                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
-                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
-                     Set(varLineValue, ThisItem.mserp_resultvalue);
-                     Set(varLineSelected, true);
-                     Set(varIsOption,
-                         CountRows(Filter('Test variable outcomes (mserp)',
-                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
-                                          mserp_testid = ThisItem.mserp_qualitytestid,
-                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
-                     Reset(MR_ValueInput)
+                  # Raise the GALLERY's selection rather than duplicating the state here. This is
+                  # the demo app's idiom (OnSelect: =Select(Parent)) and it matters for more than
+                  # tidiness: it keeps MR_Gallery.Selected pointing at the row, and that record --
+                  # a real one from the data source -- is what Save patches.
+                  OnSelect: =Select(Parent)
 
             - MR_RowMeta:
                 Control: Label
@@ -290,18 +269,11 @@ Screens:
                   Height: =20
                   Size: =9
                   Color: =RGBA(107, 125, 132, 1)
-                  OnSelect: |
-                    =Set(varLineTest, ThisItem.mserp_qualitytestid);
-                     Set(varLineSeq, ThisItem.mserp_qualityordersequencenumber);
-                     Set(varLineOutcome, ThisItem.mserp_qualitytestvariableoutcomeid);
-                     Set(varLineValue, ThisItem.mserp_resultvalue);
-                     Set(varLineSelected, true);
-                     Set(varIsOption,
-                         CountRows(Filter('Test variable outcomes (mserp)',
-                                          mserp_testgroupid = varQO.mserp_qualitytestgroupid,
-                                          mserp_testid = ThisItem.mserp_qualitytestid,
-                                          mserp_dataareaid = varQO.mserp_dataareaid)) > 0);
-                     Reset(MR_ValueInput)
+                  # Raise the GALLERY's selection rather than duplicating the state here. This is
+                  # the demo app's idiom (OnSelect: =Select(Parent)) and it matters for more than
+                  # tidiness: it keeps MR_Gallery.Selected pointing at the row, and that record --
+                  # a real one from the data source -- is what Save patches.
+                  OnSelect: =Select(Parent)
 
             - MR_RowRule:
                 Control: Rectangle
@@ -547,22 +519,24 @@ Screens:
                   (varIsOption && IsBlank(varLineOutcome)) ||
                   (!varIsOption && IsBlank(MR_ValueInput.Text)),
                   DisplayMode.Disabled, DisplayMode.Edit)
+            # Patch MR_Gallery.Selected -- the live record from the data source. The previous
+            # version did Set(varTarget, LookUp(...)) and patched that, and the write silently did
+            # not reach F&O: seq 20 of QO 000219 still read 0 after a save of 50, with no error
+            # shown. Patching the gallery's selected record is the documented pattern and removes
+            # the round trip through a variable entirely.
             OnSelect: |
               =Set(varSaving, true);
-               Set(varTarget,
-                   LookUp('Quality order line results (mserp)',
-                          mserp_qualityordernumber = varQO.mserp_qualityordernumber &&
-                          mserp_dataareaid = varQO.mserp_dataareaid &&
-                          mserp_qualityordersequencenumber = varLineSeq));
                If(varIsOption,
-                  Patch('Quality order line results (mserp)', varTarget,
+                  Patch('Quality order line results (mserp)', MR_Gallery.Selected,
                         { mserp_qualitytestvariableoutcomeid: varLineOutcome }),
-                  Patch('Quality order line results (mserp)', varTarget,
+                  Patch('Quality order line results (mserp)', MR_Gallery.Selected,
                         { mserp_resultvalue: Value(MR_ValueInput.Text) }));
                Set(varSaving, false);
                If(IsEmpty(Errors('Quality order line results (mserp)')),
-                  Notify("Saved. F&O recalculated the verdict.", NotificationType.Success),
-                  Notify(First(Errors('Quality order line results (mserp)')).Message,
+                  Notify("Saved " & Trim(varLineTest) & ". F&O recalculates the verdict.",
+                         NotificationType.Success),
+                  Notify("F&O rejected it: " &
+                         First(Errors('Quality order line results (mserp)')).Message,
                          NotificationType.Error));
                Refresh('Quality order line results (mserp)')
 
