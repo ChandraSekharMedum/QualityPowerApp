@@ -11,7 +11,9 @@ Screens:
     Properties:
       Fill: =RGBA(244, 246, 247, 1)
       LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
-      OnVisible: =Refresh('Quality Test Lines (cache)')
+      OnVisible: |
+        =Refresh('Quality Test Lines (cache)');
+         Clear(colOutcome)
     Children:
       - RS_HeaderBar:
           Control: Label@2.5.1
@@ -122,6 +124,7 @@ Screens:
                   Fill: =RGBA(255, 255, 255, 1)
                   Height: =71
                   Width: =Parent.TemplateWidth
+                  OnSelect: =Select(Parent)
             - RS_TestName:
                 Control: Label@2.5.1
                 Properties:
@@ -130,7 +133,9 @@ Screens:
                   Height: =22
                   Size: =12
                   Text: =ThisItem.Test
-                  Width: =Parent.TemplateWidth - 200
+                  Width: |
+                    =If(IsBlank(ThisItem.'Outcome variable'),
+                        Parent.TemplateWidth - 200, Parent.TemplateWidth - 336)
                   X: =10
                   Y: =8
             - RS_Tolerance:
@@ -140,13 +145,17 @@ Screens:
                   Height: =20
                   Size: =9
                   Text: |
-                    =If(ThisItem.'Upper limit' > ThisItem.'Lower limit',
+                    =If(!IsBlank(ThisItem.'Outcome variable'),
+                        "Choose an outcome  -  " & ThisItem.'Outcome variable',
+                        ThisItem.'Upper limit' > ThisItem.'Lower limit',
                         "Range " & ThisItem.'Lower limit' & " - " & ThisItem.'Upper limit' &
                           If(IsBlank(ThisItem.Unit), "", " " & ThisItem.Unit),
                         "No numeric range") &
                      If(IsBlank(ThisItem.Instrument), "",
                         "  -  " & ThisItem.Instrument)
-                  Width: =Parent.TemplateWidth - 200
+                  Width: |
+                    =If(IsBlank(ThisItem.'Outcome variable'),
+                        Parent.TemplateWidth - 200, Parent.TemplateWidth - 336)
                   X: =10
                   Y: =30
             - RS_EnteredValue:
@@ -155,36 +164,172 @@ Screens:
                   Align: =Align.Right
                   Default: =""
                   HintText: ="value"
+                  Visible: =IsBlank(ThisItem.'Outcome variable')
                   Width: =96
                   X: =Parent.TemplateWidth - 186
                   Y: =16
+
+            - RS_Outcome1:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =2
+                  Height: =40
+                  Size: =9
+                  Visible: =!IsBlank(ThisItem.'Outcome variable')
+                  Width: =76
+                  X: =Parent.TemplateWidth - 326
+                  Y: =16
+                  Text: |
+                    =Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 1).cog_outcomeid
+                  Fill: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 1).cog_outcomeid,
+                        RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+                  Color: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 1).cog_outcomeid,
+                        RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+                  BorderColor: =RGBA(210, 220, 223, 1)
+                  OnSelect: |
+                    =With({ o: Index(SortByColumns(Filter('Test Outcomes (cache)',
+                                 'Outcome variable' = ThisItem.'Outcome variable',
+                                 Company = varOrder.Company), "cog_outcomeid"), 1) },
+                        RemoveIf(colOutcome, Seq = ThisItem.Sequence);
+                        Collect(colOutcome,
+                          { Seq: ThisItem.Sequence,
+                            Outcome: o.cog_outcomeid,
+                            Implied: o.'Implied result' }))
+
+            - RS_Outcome2:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =2
+                  Height: =40
+                  Size: =9
+                  Width: =76
+                  X: =Parent.TemplateWidth - 246
+                  Y: =16
+                  Visible: |
+                    =!IsBlank(ThisItem.'Outcome variable') &&
+                     CountRows(Filter('Test Outcomes (cache)',
+                       'Outcome variable' = ThisItem.'Outcome variable',
+                       Company = varOrder.Company)) >= 2
+                  Text: |
+                    =Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 2).cog_outcomeid
+                  Fill: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 2).cog_outcomeid,
+                        RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+                  Color: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 2).cog_outcomeid,
+                        RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+                  BorderColor: =RGBA(210, 220, 223, 1)
+                  OnSelect: |
+                    =With({ o: Index(SortByColumns(Filter('Test Outcomes (cache)',
+                                 'Outcome variable' = ThisItem.'Outcome variable',
+                                 Company = varOrder.Company), "cog_outcomeid"), 2) },
+                        RemoveIf(colOutcome, Seq = ThisItem.Sequence);
+                        Collect(colOutcome,
+                          { Seq: ThisItem.Sequence,
+                            Outcome: o.cog_outcomeid,
+                            Implied: o.'Implied result' }))
+
+            - RS_Outcome3:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderThickness: =2
+                  Height: =40
+                  Size: =9
+                  Width: =76
+                  X: =Parent.TemplateWidth - 166
+                  Y: =16
+                  Visible: |
+                    =!IsBlank(ThisItem.'Outcome variable') &&
+                     CountRows(Filter('Test Outcomes (cache)',
+                       'Outcome variable' = ThisItem.'Outcome variable',
+                       Company = varOrder.Company)) >= 3
+                  Text: |
+                    =Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 3).cog_outcomeid
+                  Fill: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 3).cog_outcomeid,
+                        RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+                  Color: |
+                    =If(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome =
+                          Index(SortByColumns(Filter('Test Outcomes (cache)',
+                             'Outcome variable' = ThisItem.'Outcome variable',
+                             Company = varOrder.Company), "cog_outcomeid"), 3).cog_outcomeid,
+                        RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+                  BorderColor: =RGBA(210, 220, 223, 1)
+                  OnSelect: |
+                    =With({ o: Index(SortByColumns(Filter('Test Outcomes (cache)',
+                                 'Outcome variable' = ThisItem.'Outcome variable',
+                                 Company = varOrder.Company), "cog_outcomeid"), 3) },
+                        RemoveIf(colOutcome, Seq = ThisItem.Sequence);
+                        Collect(colOutcome,
+                          { Seq: ThisItem.Sequence,
+                            Outcome: o.cog_outcomeid,
+                            Implied: o.'Implied result' }))
             - RS_Verdict:
                 Control: Label@2.5.1
                 Properties:
                   Align: =Align.Center
                   Color: |
-                    =If(IsBlank(RS_EnteredValue.Text), RGBA(107, 125, 132, 1),
-                        ThisItem.'Upper limit' > ThisItem.'Lower limit' &&
-                        (Value(RS_EnteredValue.Text) < ThisItem.'Lower limit' ||
-                         Value(RS_EnteredValue.Text) > ThisItem.'Upper limit'),
+                    =If(!IsBlank(ThisItem.'Outcome variable'),
+                          If(IsBlank(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome),
+                               RGBA(107, 125, 132, 1),
+                             LookUp(colOutcome, Seq = ThisItem.Sequence).Implied = 200000001,
+                               RGBA(32, 97, 61, 1),
+                             RGBA(156, 31, 23, 1)),
+                        IsBlank(RS_EnteredValue.Text), RGBA(107, 125, 132, 1),
+                        ThisItem.'Upper limit' <= ThisItem.'Lower limit', RGBA(107, 125, 132, 1),
+                        Value(RS_EnteredValue.Text) < ThisItem.'Lower limit' ||
+                        Value(RS_EnteredValue.Text) > ThisItem.'Upper limit',
                           RGBA(156, 31, 23, 1),
                         RGBA(32, 97, 61, 1))
                   Fill: |
-                    =If(IsBlank(RS_EnteredValue.Text), RGBA(233, 239, 241, 1),
-                        ThisItem.'Upper limit' > ThisItem.'Lower limit' &&
-                        (Value(RS_EnteredValue.Text) < ThisItem.'Lower limit' ||
-                         Value(RS_EnteredValue.Text) > ThisItem.'Upper limit'),
+                    =If(!IsBlank(ThisItem.'Outcome variable'),
+                          If(IsBlank(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome),
+                               RGBA(233, 239, 241, 1),
+                             LookUp(colOutcome, Seq = ThisItem.Sequence).Implied = 200000001,
+                               RGBA(222, 238, 228, 1),
+                             RGBA(247, 227, 225, 1)),
+                        IsBlank(RS_EnteredValue.Text), RGBA(233, 239, 241, 1),
+                        ThisItem.'Upper limit' <= ThisItem.'Lower limit', RGBA(233, 239, 241, 1),
+                        Value(RS_EnteredValue.Text) < ThisItem.'Lower limit' ||
+                        Value(RS_EnteredValue.Text) > ThisItem.'Upper limit',
                           RGBA(247, 227, 225, 1),
                         RGBA(222, 238, 228, 1))
                   FontWeight: =FontWeight.Semibold
                   Size: =10
                   Text: |
-                    =If(IsBlank(RS_EnteredValue.Text), "-",
+                    =If(!IsBlank(ThisItem.'Outcome variable'),
+                          If(IsBlank(LookUp(colOutcome, Seq = ThisItem.Sequence).Outcome), "-",
+                             LookUp(colOutcome, Seq = ThisItem.Sequence).Implied = 200000001,
+                               "PASS", "FAIL"),
+                        IsBlank(RS_EnteredValue.Text), "-",
                         ThisItem.'Upper limit' > ThisItem.'Lower limit',
                           If(Value(RS_EnteredValue.Text) >= ThisItem.'Lower limit' &&
                              Value(RS_EnteredValue.Text) <= ThisItem.'Upper limit',
                              "PASS", "FAIL"),
-                        "PASS")
+                        "-")
                   Width: =72
                   X: =Parent.TemplateWidth - 82
                   Y: =16
@@ -209,7 +354,7 @@ Screens:
             PaddingLeft: =10
             Size: =10
             Text: |
-              =With({ e: CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text))),
+              =With({ e: CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text) || !IsBlank(LookUp(colOutcome, Seq = Sequence).Outcome))),
                       f: CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")),
                       t: CountRows(RS_TestGallery.AllItems) },
                  If(e = 0, "No results entered  " & t & " tests",
@@ -224,12 +369,12 @@ Screens:
           Properties:
             Color: =RGBA(255, 255, 255, 1)
             DisplayMode: |
-              =If(CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text))) = 0,
+              =If(CountRows(Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text) || !IsBlank(LookUp(colOutcome, Seq = Sequence).Outcome))) = 0,
                   DisplayMode.Disabled, DisplayMode.Edit)
             Fill: =RGBA(13, 98, 115, 1)
             OnSelect: |
               =Set(varCorrelationId, Text(GUID()));
-               Set(varEntered, Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text)));
+               Set(varEntered, Filter(RS_TestGallery.AllItems, !IsBlank(RS_EnteredValue.Text) || !IsBlank(LookUp(colOutcome, Seq = Sequence).Outcome)));
                Set(varFailCount, CountRows(Filter(RS_TestGallery.AllItems, RS_Verdict.Text = "FAIL")));
                Set(varSheet,
                  Patch('Result Sheets (draft)', Defaults('Result Sheets (draft)'),
@@ -246,7 +391,10 @@ Screens:
                    { 'Result entry': varOrder.'Quality order number' & " | " & L.Sequence & " | " & L.Test,
                      Test: L.Test,
                      Sequence: L.Sequence,
-                     'Entered value': L.RS_EnteredValue.Text,
+                     'Entered value':
+                       If(IsBlank(LookUp(colOutcome, Seq = L.Sequence).Outcome),
+                          L.RS_EnteredValue.Text,
+                          LookUp(colOutcome, Seq = L.Sequence).Outcome),
                      'Computed verdict': If(L.RS_Verdict.Text = "FAIL", 200000000, 200000001),
                      'Entered on': Now(),
                      'Result sheet': varSheet }));
@@ -268,7 +416,8 @@ Screens:
                        """,""QualityOrderNumber"":""" & varOrder.'Quality order number' &
                        """,""TestId"":""" & L2.Test &
                        """,""TestSequence"":" & L2.Sequence &
-                       ",""ResultValue"":" & Value(L2.RS_EnteredValue.Text) &
+                       ",""ResultValue"":" & Coalesce(Value(L2.RS_EnteredValue.Text), 0) &
+                       ",""OutcomeId"":""" & LookUp(colOutcome, Seq = L2.Sequence).Outcome & """" &
                        ",""TestResult"":" & If(L2.RS_Verdict.Text = "FAIL", 200000000, 200000001) & "}",
                        ",") &
                      "]}" });

@@ -201,6 +201,7 @@ Screens:
             - NC_CoRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -308,6 +309,7 @@ Screens:
             - NC_OrderRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -403,6 +405,7 @@ Screens:
             - NC_AccRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -598,6 +601,7 @@ Screens:
             - NC_ItRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -680,6 +684,7 @@ Screens:
             - NC_PtRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth

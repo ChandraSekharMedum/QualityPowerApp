@@ -92,7 +92,8 @@ Screens:
       - AT_WholeOrderButton:
           Control: Classic/Button
           Properties:
-            Text: ="The order as a whole (not a specific test)"
+            Text: ="Pick a test below - F&O cannot attach to the order as a whole"
+            DisplayMode: =DisplayMode.Disabled
             X: =16
             Y: =120
             Width: =660
@@ -131,6 +132,7 @@ Screens:
             - AT_TestRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -215,6 +217,7 @@ Screens:
             - AT_ListRowFill:
                 Control: Rectangle
                 Properties:
+                  OnSelect: =Select(Parent)
                   X: =0
                   Y: =0
                   Width: =Parent.TemplateWidth
@@ -433,7 +436,7 @@ Screens:
                     "cannot be queued. Retake it further back or at a lower camera resolution.",
                   "Ready: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
                   " KB of base64, inside the 1024 KB F&O limit.  Subject: " &
-                  If(IsBlank(varAtTestId), "the order as a whole", varAtTestId))
+                  If(IsBlank(varAtTestId), "no test selected yet", varAtTestId))
             X: =700
             Y: =478
             Width: =650
@@ -468,12 +471,15 @@ Screens:
               =If(!IsBlank(varB64) &&
                   Len(varB64) <= 1048576 &&
                   !IsBlank(AT_FileName.Text) &&
-                  !IsBlank(varOrder.cog_qualityordernumber),
+                  !IsBlank(varOrder.cog_qualityordernumber) &&
+                  !IsBlank(varAtTestId),
                   DisplayMode.Edit, DisplayMode.Disabled)
             # The outbox payload deliberately carries no row id -- the drain flow finds the
             # attachment by correlation id, which avoids reading a Dataverse primary key back out
             # of Patch() in Power Fx. cog_linenum stays 0 because the cached test lines carry no
-            # F&O line number; order plus test id plus sequence is what identifies the result.
+            # F&O line number; order plus test id plus sequence is what identifies the result.# of Patch() in Power Fx. cog_linenum is only a placeholder here -- the drain flow
+            # of Patch() in Power Fx. cog_linenum stays 0 because the cached test lines carry no
+            # F&O line number; order plus test id plus sequence is what identifies the result.# resolves the real F&O line number, which a probe showed is required (0 is never processed).
             OnSelect: |
               =Set(varAtCorrelationId, Text(GUID()));
                Patch('Attachments (draft)', Defaults('Attachments (draft)'),
