@@ -213,8 +213,31 @@ $definition = [ordered]@{
                             }
                         }
 
-                        Create_the_staged_file = [ordered]@{
+                        # LineNum must be the REAL F&O result line number. Probed 2026-08-19:
+                        # LineNum 1 is consumed and attached, LineNum 0 is never processed, even
+                        # with a valid TestId and TestSequence. The offline cache does not carry a
+                        # line number, so it is resolved here at drain time -- which is fine
+                        # because the drain only runs when there is a connection anyway.
+                        Read_the_result_line = [ordered]@{
                             runAfter = [ordered]@{ Fail_if_no_attachment_row = @('Succeeded') }
+                            type     = 'OpenApiConnection'
+                            inputs   = [ordered]@{
+                                host       = ($dvHost + [ordered]@{ operationId = 'ListRecords' })
+                                parameters = [ordered]@{
+                                    entityName = 'mserp_inventqualityorderlineresultentities'
+                                    '$select'  = 'mserp_resultlinenumber,mserp_qualityordersequencenumber'
+                                    '$filter'  = ("@concat('mserp_dataareaid eq ''', " + (P 'Company') +
+                                                  ", ''' and mserp_qualityordernumber eq ''', " +
+                                                  (A 'cog_qualityordernumber') +
+                                                  ", ''' and mserp_qualityordersequencenumber eq ', " +
+                                                  "string(coalesce(" + (A 'cog_testsequence') + ", 0))" + ")")
+                                    '$top'     = 1
+                                }
+                            }
+                        }
+
+                        Create_the_staged_file = [ordered]@{
+                            runAfter = [ordered]@{ Read_the_result_line = @('Succeeded') }
                             type     = 'OpenApiConnection'
                             inputs   = [ordered]@{
                                 host       = ($dvHost + [ordered]@{ operationId = 'CreateRecord' })
@@ -226,7 +249,7 @@ $definition = [ordered]@{
                                     'item/mserp_displayordernumber'  = ('@' + (A 'cog_qualityordernumber'))
                                     'item/mserp_testid'              = ('@coalesce(' + (A 'cog_testid') + ", '')")
                                     'item/mserp_testsequence'        = ('@int(coalesce(' + (A 'cog_testsequence') + ', 0))')
-                                    'item/mserp_linenum'             = ('@float(coalesce(' + (A 'cog_linenum') + ', 0))')
+                                    'item/mserp_linenum'             = ('@float(coalesce(first(outputs(''Read_the_result_line'')?[''body/value''])?[''mserp_resultlinenumber''], 1))')
                                     'item/mserp_filename'            = ('@coalesce(' + (A 'cog_filename') + ", 'photo.jpg')")
                                     # 20 characters is the cap on this field.
                                     # PROVEN 2026-08-18: F&O only attaches the file when
