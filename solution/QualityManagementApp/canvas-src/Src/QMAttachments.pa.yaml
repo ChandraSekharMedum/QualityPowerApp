@@ -1,17 +1,10 @@
 # ************************************************************************************************
-# Quality Management -- Photos against a quality order test result
-#
-# Rationale lives in docs\ATTACHMENTS.md; Export-Solution.ps1 strips comments from this file.
-#
-# The two constraints that shape this screen:
-#   1. F&O accepts exactly 1,048,576 base64 characters (about 786 KB of image) and rejects one
-#      more. The screen measures the photo and refuses oversized ones BEFORE queuing, rather
-#      than letting F&O reject it minutes later when the inspector has moved on.
-#   2. F&O picks staged files up on a periodic job -- measured at about 13.5 minutes -- so
-#      CONFIRMED here means "F&O accepted the file", not "it is visible in F&O yet".
-#
-# Capture writes to cog_attachment plus one outbox row. Nothing calls F&O directly, so this works
-# offline exactly like the result sheet does.
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
 # ************************************************************************************************
 Screens:
   QMAttachments:
@@ -26,260 +19,213 @@ Screens:
          Refresh('Attachments (draft)')
     Children:
       - AT_HeaderBar:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =56
+            PaddingLeft: =56
+            Size: =18
             Text: |
               =If(IsBlank(varOrder.cog_qualityordernumber),
                   "Photos  -  no order selected",
                   "Photos  -  QO " & varOrder.cog_qualityordernumber)
-            X: =0
-            Y: =0
             Width: =Parent.Width
-            Height: =56
-            Fill: =RGBA(13, 98, 115, 1)
-            Color: =RGBA(255, 255, 255, 1)
-            Size: =18
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =56
-            VerticalAlign: =VerticalAlign.Middle
-
       - AT_BackButton:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
-            Text: ="<"
-            X: =8
-            Y: =12
-            Width: =40
-            Height: =32
-            Fill: =RGBA(13, 98, 115, 1)
-            Color: =RGBA(255, 255, 255, 1)
             BorderColor: =RGBA(255, 255, 255, 1)
             BorderThickness: =1
-            Size: =12
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =32
             OnSelect: =Back()
-
+            Size: =12
+            Text: ="<"
+            Width: =40
+            X: =8
+            Y: =12
       - AT_SyncStrip:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =28
+            PaddingLeft: =16
+            Size: =9
             Text: |
               =If(Connection.Connected,
                   "Online  -  F&O accepts the photo within about 15 seconds, then attaches it on its next run (about 15 minutes)",
                   "Offline  -  the photo is held in the queue and sent when you reconnect")
-            X: =0
-            Y: =56
             Width: =Parent.Width
-            Height: =28
-            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
-            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
-            Size: =9
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =16
-            VerticalAlign: =VerticalAlign.Middle
-
-      # ------------------------------------------------------------------ 1 subject
+            Y: =56
       - AT_L1:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="1   WHAT IS THE PHOTO OF"
-            X: =16
-            Y: =96
-            Width: =660
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
             Height: =20
             Size: =8
-            FontWeight: =FontWeight.Semibold
-            Color: =RGBA(107, 125, 132, 1)
-
-      - AT_WholeOrderButton:
-          Control: Classic/Button
-          Properties:
-            Text: ="Pick a test below - F&O cannot attach to the order as a whole"
-            DisplayMode: =DisplayMode.Disabled
-            X: =16
-            Y: =120
+            Text: ="1   WHAT IS THE PHOTO OF"
             Width: =660
-            Height: =36
-            Size: =11
-            FontWeight: =FontWeight.Semibold
-            BorderThickness: =2
-            Fill: =If(IsBlank(varAtTestId), RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
-            Color: =If(IsBlank(varAtTestId), RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            X: =16
+            Y: =96
+      - AT_WholeOrderButton:
+          Control: Classic/Button@2.2.0
+          Properties:
             BorderColor: =If(IsBlank(varAtTestId), RGBA(13, 98, 115, 1), RGBA(210, 220, 223, 1))
+            Color: =If(IsBlank(varAtTestId), RGBA(255, 255, 255, 1), RGBA(13, 98, 115, 1))
+            DisplayMode: =DisplayMode.Disabled
+            Fill: =If(IsBlank(varAtTestId), RGBA(13, 98, 115, 1), RGBA(255, 255, 255, 1))
+            Height: =36
             OnSelect: |
               =Set(varAtTestId, "");
                Set(varAtTestSeq, 0)
-
+            Size: =11
+            Text: ="Pick a test below - F&O cannot attach to the order as a whole"
+            Width: =660
+            X: =16
+            Y: =120
       - AT_TestGallery:
-          Control: Gallery
+          Control: Gallery@2.15.0
           Variant: Vertical
           Properties:
+            Height: =200
             Items: |
               =SortByColumns(
                  Filter('Quality Test Lines (cache)',
                         cog_qualityordernumber = varOrder.cog_qualityordernumber,
                         cog_company = varOrder.cog_company),
                  "cog_testsequence", SortOrder.Ascending)
-            X: =16
-            Y: =164
-            Width: =660
-            Height: =200
-            TemplateSize: =44
-            TemplatePadding: =0
-            ShowScrollbar: =true
             OnSelect: |
               =Set(varAtTestId, ThisItem.cog_testid);
                Set(varAtTestSeq, ThisItem.cog_testsequence)
+            TemplatePadding: =0
+            TemplateSize: =44
+            Width: =660
+            X: =16
+            Y: =164
           Children:
             - AT_TestRowFill:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  OnSelect: =Select(Parent)
-                  X: =0
-                  Y: =0
-                  Width: =Parent.TemplateWidth
-                  Height: =43
                   Fill: |
                     =If(ThisItem.cog_testsequence = varAtTestSeq && !IsBlank(varAtTestId),
                         RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
-
+                  Height: =43
+                  OnSelect: =Select(Parent)
+                  Width: =Parent.TemplateWidth
             - AT_TestName:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
+                  Color: =RGBA(13, 98, 115, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =36
+                  OnSelect: |
+                    =Set(varAtTestId, ThisItem.cog_testid);
+                     Set(varAtTestSeq, ThisItem.cog_testsequence)
+                  Size: =11
                   Text: =ThisItem.cog_testid
+                  Underline: =true
+                  Width: =Parent.TemplateWidth - 120
                   X: =12
                   Y: =4
-                  Width: =Parent.TemplateWidth - 120
-                  Height: =36
-                  Size: =11
-                  FontWeight: =FontWeight.Semibold
-                  Underline: =true
-                  Color: =RGBA(13, 98, 115, 1)
-                  VerticalAlign: =VerticalAlign.Middle
-                  OnSelect: |
-                    =Set(varAtTestId, ThisItem.cog_testid);
-                     Set(varAtTestSeq, ThisItem.cog_testsequence)
-
             - AT_TestSeq:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: ="seq " & ThisItem.cog_testsequence
-                  X: =Parent.TemplateWidth - 108
-                  Y: =4
-                  Width: =96
-                  Height: =36
-                  Size: =9
                   Align: =Align.Right
                   Color: =RGBA(107, 125, 132, 1)
-                  VerticalAlign: =VerticalAlign.Middle
+                  Height: =36
                   OnSelect: |
                     =Set(varAtTestId, ThisItem.cog_testid);
                      Set(varAtTestSeq, ThisItem.cog_testsequence)
-
+                  Size: =9
+                  Text: ="seq " & ThisItem.cog_testsequence
+                  Width: =96
+                  X: =Parent.TemplateWidth - 108
+                  Y: =4
             - AT_TestRule:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  X: =0
-                  Y: =43
-                  Width: =Parent.TemplateWidth
-                  Height: =1
                   Fill: =RGBA(210, 220, 223, 1)
-
-      # ------------------------------------------------------------------ already captured
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =43
       - AT_L2:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="PHOTOS FOR THIS ORDER"
-            X: =16
-            Y: =372
-            Width: =660
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
             Height: =20
             Size: =8
-            FontWeight: =FontWeight.Semibold
-            Color: =RGBA(107, 125, 132, 1)
-
+            Text: ="PHOTOS FOR THIS ORDER"
+            Width: =660
+            X: =16
+            Y: =372
       - AT_ListGallery:
-          Control: Gallery
+          Control: Gallery@2.15.0
           Variant: Vertical
           Properties:
+            Height: =340
             Items: |
               =SortByColumns(
                  Filter('Attachments (draft)',
                         cog_qualityordernumber = varOrder.cog_qualityordernumber,
                         cog_company = varOrder.cog_company),
                  "cog_capturedon", SortOrder.Descending)
+            TemplatePadding: =0
+            TemplateSize: =72
+            Width: =660
             X: =16
             Y: =396
-            Width: =660
-            Height: =340
-            TemplateSize: =72
-            TemplatePadding: =0
-            ShowScrollbar: =true
           Children:
             - AT_ListRowFill:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  OnSelect: =Select(Parent)
-                  X: =0
-                  Y: =0
-                  Width: =Parent.TemplateWidth
-                  Height: =71
                   Fill: =RGBA(255, 255, 255, 1)
-
+                  Height: =71
+                  OnSelect: =Select(Parent)
+                  Width: =Parent.TemplateWidth
             - AT_Thumb:
-                Control: Image
+                Control: Image@2.2.3
                 Properties:
+                  Height: =59
                   Image: ="data:image/jpeg;base64," & ThisItem.cog_base64
                   Visible: =!IsBlank(ThisItem.cog_base64)
+                  Width: =84
                   X: =8
                   Y: =6
-                  Width: =84
-                  Height: =59
-                  ImagePosition: =ImagePosition.Fit
-
             - AT_ListName:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: =ThisItem.cog_filename
-                  X: =100
-                  Y: =8
-                  Width: =Parent.TemplateWidth - 220
+                  Color: =RGBA(16, 26, 30, 1)
+                  FontWeight: =FontWeight.Semibold
                   Height: =22
                   Size: =11
-                  FontWeight: =FontWeight.Semibold
-                  Color: =RGBA(16, 26, 30, 1)
-
+                  Text: =ThisItem.cog_filename
+                  Width: =Parent.TemplateWidth - 220
+                  X: =100
+                  Y: =8
             - AT_ListMeta:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
+                  Color: =RGBA(107, 125, 132, 1)
+                  Height: =20
+                  Size: =9
                   Text: |
                     =If(IsBlank(ThisItem.cog_testid), "whole order",
                         ThisItem.cog_testid & "  -  seq " & ThisItem.cog_testsequence) &
                      "   -   " & Text(RoundDown(ThisItem.cog_sizechars / 1024, 0), "0") & " KB" &
                      "   -   " & Text(ThisItem.cog_capturedon, "dd mmm hh:mm")
+                  Width: =Parent.TemplateWidth - 220
                   X: =100
                   Y: =32
-                  Width: =Parent.TemplateWidth - 220
-                  Height: =20
-                  Size: =9
-                  Color: =RGBA(107, 125, 132, 1)
-
             - AT_ListStatus:
-                Control: Label
+                Control: Label@2.5.1
                 Properties:
-                  Text: |
-                    =Switch(ThisItem.cog_attachstatus,
-                        1, "DRAFT",
-                        2, "QUEUED",
-                        3, "SENDING",
-                        4, "ACCEPTED",
-                        5, "ATTENTION", "-")
-                  X: =Parent.TemplateWidth - 112
-                  Y: =22
-                  Width: =104
-                  Height: =28
-                  Size: =9
-                  FontWeight: =FontWeight.Semibold
                   Align: =Align.Center
-                  VerticalAlign: =VerticalAlign.Middle
                   Color: |
                     =Switch(ThisItem.cog_attachstatus,
                         4, RGBA(32, 97, 61, 1),
@@ -290,143 +236,147 @@ Screens:
                         4, RGBA(222, 238, 228, 1),
                         5, RGBA(247, 227, 225, 1),
                         RGBA(248, 235, 214, 1))
-
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  Size: =9
+                  Text: |
+                    =Switch(ThisItem.cog_attachstatus,
+                        1, "DRAFT",
+                        2, "QUEUED",
+                        3, "SENDING",
+                        4, "ACCEPTED",
+                        5, "ATTENTION", "-")
+                  Width: =104
+                  X: =Parent.TemplateWidth - 112
+                  Y: =22
             - AT_ListRule:
-                Control: Rectangle
+                Control: Rectangle@2.3.0
                 Properties:
-                  X: =0
-                  Y: =71
-                  Width: =Parent.TemplateWidth
-                  Height: =1
                   Fill: =RGBA(210, 220, 223, 1)
-
-      # ------------------------------------------------------------------ 2 capture
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =71
       - AT_R1:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="2   TAKE THE PHOTO"
-            X: =700
-            Y: =96
-            Width: =650
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
             Height: =20
             Size: =8
-            FontWeight: =FontWeight.Semibold
-            Color: =RGBA(107, 125, 132, 1)
-
-      - AT_Camera:
-          Control: Camera
-          Properties:
+            Text: ="2   TAKE THE PHOTO"
+            Width: =650
             X: =700
-            Y: =118
-            Width: =320
+            Y: =96
+      - AT_Camera:
+          Control: Camera@2.4.0
+          Properties:
+            Camera: =-1
             Height: =240
-            # Tapping the camera feed captures, the same as the button below it.
             OnSelect: |
               =Set(varPhoto, AT_Camera.Photo);
                Set(varRaw, JSON(AT_Camera.Photo, JSONFormat.IncludeBinaryData));
                Set(varB64, Mid(varRaw, Find(",", varRaw) + 1, Len(varRaw) - Find(",", varRaw) - 1))
-
+            Width: =320
+            X: =700
+            Y: =118
       - AT_PreviewFrame:
-          Control: Rectangle
+          Control: Rectangle@2.3.0
           Properties:
-            X: =1030
-            Y: =118
-            Width: =320
-            Height: =240
             Fill: =RGBA(233, 239, 241, 1)
-
-      - AT_PreviewHint:
-          Control: Label
-          Properties:
-            Text: ="The captured photo appears here"
-            Visible: =IsBlank(varB64)
+            Height: =240
+            Width: =320
             X: =1030
             Y: =118
-            Width: =320
+      - AT_PreviewHint:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(107, 125, 132, 1)
             Height: =240
             Size: =9
-            Align: =Align.Center
-            VerticalAlign: =VerticalAlign.Middle
-            Color: =RGBA(107, 125, 132, 1)
-
-      - AT_Preview:
-          Control: Image
-          Properties:
-            Image: =varPhoto
-            Visible: =!IsBlank(varB64)
+            Text: ="The captured photo appears here"
+            Visible: =IsBlank(varB64)
+            Width: =320
             X: =1030
             Y: =118
-            Width: =320
-            Height: =240
-            ImagePosition: =ImagePosition.Fit
-
-      - AT_CaptureButton:
-          Control: Classic/Button
+      - AT_Preview:
+          Control: Image@2.2.3
           Properties:
-            Text: ="Capture"
-            X: =700
-            Y: =364
+            Height: =240
+            Image: =varPhoto
+            Visible: =!IsBlank(varB64)
             Width: =320
-            Height: =36
-            Fill: =RGBA(13, 98, 115, 1)
+            X: =1030
+            Y: =118
+      - AT_CaptureButton:
+          Control: Classic/Button@2.2.0
+          Properties:
             Color: =RGBA(255, 255, 255, 1)
-            Size: =12
-            FontWeight: =FontWeight.Semibold
-            # JSON(...IncludeBinaryData) renders the image as a quoted data URI:
-            #   "data:image/jpeg;base64,XXXX"
-            # Base64 contains no comma, so the first comma is the delimiter. Strip everything up
-            # to it, and drop the trailing quote by taking one character less.
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =36
             OnSelect: |
               =Set(varPhoto, AT_Camera.Photo);
                Set(varRaw, JSON(AT_Camera.Photo, JSONFormat.IncludeBinaryData));
                Set(varB64, Mid(varRaw, Find(",", varRaw) + 1, Len(varRaw) - Find(",", varRaw) - 1))
-
-      - AT_ClearButton:
-          Control: Classic/Button
-          Properties:
-            Text: ="Discard"
-            X: =1030
-            Y: =364
-            Width: =320
-            Height: =36
-            Fill: =RGBA(255, 255, 255, 1)
-            Color: =RGBA(13, 98, 115, 1)
-            BorderColor: =RGBA(210, 220, 223, 1)
-            BorderThickness: =2
             Size: =12
+            Text: ="Capture"
+            Width: =320
+            X: =700
+            Y: =364
+      - AT_ClearButton:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(210, 220, 223, 1)
+            Color: =RGBA(13, 98, 115, 1)
             DisplayMode: =If(IsBlank(varB64), DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =36
             OnSelect: |
               =Set(varPhoto, Blank());
                Set(varB64, "")
-
-      # ------------------------------------------------------------------ 3 attach
+            Size: =12
+            Text: ="Discard"
+            Width: =320
+            X: =1030
+            Y: =364
       - AT_R2:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
-            Text: ="3   NAME AND ATTACH"
-            X: =700
-            Y: =410
-            Width: =650
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
             Height: =20
             Size: =8
-            FontWeight: =FontWeight.Semibold
-            Color: =RGBA(107, 125, 132, 1)
-
+            Text: ="3   NAME AND ATTACH"
+            Width: =650
+            X: =700
+            Y: =410
       - AT_FileName:
-          Control: Classic/TextInput
+          Control: Classic/TextInput@2.3.2
           Properties:
             Default: |
               ="QO" & varOrder.cog_qualityordernumber & "-" & Text(Now(), "hhmmss") & ".jpg"
+            Height: =36
             HintText: ="file name"
+            Size: =11
+            Width: =650
             X: =700
             Y: =434
-            Width: =650
-            Height: =36
-            Size: =11
-
       - AT_SizeNote:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: |
+              =If(IsBlank(varB64), RGBA(107, 125, 132, 1),
+                  Len(varB64) > 1048576, RGBA(156, 31, 23, 1),
+                  RGBA(32, 97, 61, 1))
+            Fill: |
+              =If(IsBlank(varB64), RGBA(233, 239, 241, 1),
+                  Len(varB64) > 1048576, RGBA(247, 227, 225, 1),
+                  RGBA(222, 238, 228, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =12
+            PaddingRight: =12
+            Size: =10
             Text: |
               =If(IsBlank(varB64),
                   "No photo captured yet.",
@@ -437,36 +387,13 @@ Screens:
                   "Ready: " & Text(RoundDown(Len(varB64) / 1024, 0), "0") &
                   " KB of base64, inside the 1024 KB F&O limit.  Subject: " &
                   If(IsBlank(varAtTestId), "no test selected yet", varAtTestId))
+            Width: =650
             X: =700
             Y: =478
-            Width: =650
-            Height: =44
-            Size: =10
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =12
-            PaddingRight: =12
-            VerticalAlign: =VerticalAlign.Middle
-            Color: |
-              =If(IsBlank(varB64), RGBA(107, 125, 132, 1),
-                  Len(varB64) > 1048576, RGBA(156, 31, 23, 1),
-                  RGBA(32, 97, 61, 1))
-            Fill: |
-              =If(IsBlank(varB64), RGBA(233, 239, 241, 1),
-                  Len(varB64) > 1048576, RGBA(247, 227, 225, 1),
-                  RGBA(222, 238, 228, 1))
-
       - AT_AttachButton:
-          Control: Classic/Button
+          Control: Classic/Button@2.2.0
           Properties:
-            Text: ="Attach to the quality order"
-            X: =700
-            Y: =530
-            Width: =650
-            Height: =44
-            Fill: =RGBA(13, 98, 115, 1)
             Color: =RGBA(255, 255, 255, 1)
-            Size: =13
-            FontWeight: =FontWeight.Semibold
             DisplayMode: |
               =If(!IsBlank(varB64) &&
                   Len(varB64) <= 1048576 &&
@@ -474,12 +401,8 @@ Screens:
                   !IsBlank(varOrder.cog_qualityordernumber) &&
                   !IsBlank(varAtTestId),
                   DisplayMode.Edit, DisplayMode.Disabled)
-            # The outbox payload deliberately carries no row id -- the drain flow finds the
-            # attachment by correlation id, which avoids reading a Dataverse primary key back out
-            # of Patch() in Power Fx. cog_linenum stays 0 because the cached test lines carry no
-            # F&O line number; order plus test id plus sequence is what identifies the result.# of Patch() in Power Fx. cog_linenum is only a placeholder here -- the drain flow
-            # of Patch() in Power Fx. cog_linenum stays 0 because the cached test lines carry no
-            # F&O line number; order plus test id plus sequence is what identifies the result.# resolves the real F&O line number, which a probe showed is required (0 is never processed).
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =44
             OnSelect: |
               =Set(varAtCorrelationId, Text(GUID()));
                Patch('Attachments (draft)', Defaults('Attachments (draft)'),
@@ -512,42 +435,43 @@ Screens:
                Set(varB64, "");
                Reset(AT_FileName);
                Refresh('Attachments (draft)')
-
+            Size: =13
+            Text: ="Attach to the quality order"
+            Width: =650
+            X: =700
+            Y: =530
       - AT_HowNote:
-          Control: Label
+          Control: Label@2.5.1
           Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            Fill: =RGBA(233, 239, 241, 1)
+            Height: =100
+            PaddingLeft: =12
+            PaddingRight: =12
+            Size: =8
             Text: |
               ="ACCEPTED means F&O has taken the file. F&O then attaches it on its next processing " &
                "run, which measured about 13 to 14 minutes, so allow roughly 15 minutes before " &
                "looking for it on the quality order in F&O. A photo that fails turns ATTENTION and " &
                "can be retried from the Submission Queue under the same correlation id, so a photo " &
                "that did land is never attached twice."
+            Width: =650
             X: =700
             Y: =584
-            Width: =650
-            Height: =100
-            Fill: =RGBA(233, 239, 241, 1)
-            Color: =RGBA(107, 125, 132, 1)
-            Size: =8
+      - AT_NoOrder:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(138, 86, 6, 1)
+            Fill: =RGBA(248, 235, 214, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =60
             PaddingLeft: =12
             PaddingRight: =12
-            VerticalAlign: =VerticalAlign.Middle
-
-      - AT_NoOrder:
-          Control: Label
-          Properties:
+            Size: =10
             Text: |
               ="No quality order is selected. Go back to Enter Test Results, open an order, then " &
                "choose Photos."
             Visible: =IsBlank(varOrder.cog_qualityordernumber)
+            Width: =650
             X: =700
             Y: =96
-            Width: =650
-            Height: =60
-            Fill: =RGBA(248, 235, 214, 1)
-            Color: =RGBA(138, 86, 6, 1)
-            Size: =10
-            FontWeight: =FontWeight.Semibold
-            PaddingLeft: =12
-            PaddingRight: =12
-            VerticalAlign: =VerticalAlign.Middle

@@ -103,9 +103,9 @@ Screens:
             - OL_RowFill:
                 Control: Rectangle@2.3.0
                 Properties:
-                  OnSelect: =Select(Parent)
                   Fill: =RGBA(255, 255, 255, 1)
                   Height: =75
+                  OnSelect: =Select(Parent)
                   Width: =Parent.TemplateWidth
             - OL_OrderLink:
                 Control: Label@2.5.1
@@ -124,11 +124,11 @@ Screens:
             - OL_Detail:
                 Control: Label@2.5.1
                 Properties:
+                  Color: =RGBA(107, 125, 132, 1)
+                  Height: =20
                   OnSelect: |
                     =Set(varOrder, ThisItem);
                      Navigate(QMResultSheet, ScreenTransition.None)
-                  Color: =RGBA(107, 125, 132, 1)
-                  Height: =20
                   Size: =9
                   Text: |
                     =ThisItem.cog_itemnumber & "  -  " & ThisItem.cog_productname &
@@ -139,11 +139,11 @@ Screens:
             - OL_Meta:
                 Control: Label@2.5.1
                 Properties:
+                  Color: =RGBA(107, 125, 132, 1)
+                  Height: =18
                   OnSelect: |
                     =Set(varOrder, ThisItem);
                      Navigate(QMResultSheet, ScreenTransition.None)
-                  Color: =RGBA(107, 125, 132, 1)
-                  Height: =18
                   Size: =8
                   Text: |
                     ="Test group " & ThisItem.cog_testgroupid &
@@ -155,9 +155,6 @@ Screens:
             - OL_Status:
                 Control: Label@2.5.1
                 Properties:
-                  OnSelect: |
-                    =Set(varOrder, ThisItem);
-                     Navigate(QMResultSheet, ScreenTransition.None)
                   Align: =Align.Center
                   Color: |
                     =Switch(ThisItem.cog_status,
@@ -171,6 +168,9 @@ Screens:
                         RGBA(248, 235, 214, 1))
                   FontWeight: =FontWeight.Semibold
                   Height: =28
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Size: =9
                   Text: |
                     =Switch(ThisItem.cog_status,
@@ -183,12 +183,12 @@ Screens:
             - OL_Chevron:
                 Control: Label@2.5.1
                 Properties:
-                  OnSelect: |
-                    =Set(varOrder, ThisItem);
-                     Navigate(QMResultSheet, ScreenTransition.None)
                   Align: =Align.Center
                   Color: =RGBA(107, 125, 132, 1)
                   Height: =28
+                  OnSelect: |
+                    =Set(varOrder, ThisItem);
+                     Navigate(QMResultSheet, ScreenTransition.None)
                   Size: =12
                   Text: =">"
                   Width: =16

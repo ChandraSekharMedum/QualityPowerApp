@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>cog_qualitymanagement_a469f</Name>
-  <AppVersion>2026-08-17T16:14:35Z</AppVersion>
+  <AppVersion>2026-08-19T08:33:34Z</AppVersion>
   <Status>Ready</Status>
-  <CreatedByClientVersion>3.26074.11.0</CreatedByClientVersion>
-  <MinClientVersion>3.26074.11.0</MinClientVersion>
-  <Tags>{"primaryDeviceWidth":"1366","primaryDeviceHeight":"768","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Tablet","showStatusBar":"false","publisherVersion":"3.26074.11","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","m365CopilotSettingValue":"0","sienaVersion":"20260817T150145Z-3.26074.11.0"}</Tags>
+  <CreatedByClientVersion>3.26081.16.0</CreatedByClientVersion>
+  <MinClientVersion>3.26081.16.0</MinClientVersion>
+  <Tags>{"primaryDeviceWidth":"1366","primaryDeviceHeight":"768","supportsPortrait":"true","supportsLandscape":"true","primaryFormFactor":"Tablet","showStatusBar":"false","publisherVersion":"3.26081.16","minimumRequiredApiVersion":"2.2.0","hasComponent":"false","hasUnlockedComponent":"false","isUnifiedRootApp":"false","m365CopilotSettingValue":"0","sienaVersion":"20260819T050509Z-3.26074.11.0"}</Tags>
   <IsCdsUpgraded>0</IsCdsUpgraded>
   <GalleryItemId xsi:nil="true"></GalleryItemId>
   <BackgroundColor>RGBA(0,176,240,1)</BackgroundColor>
   <DisplayName>Quality Management</DisplayName>
   <Description>Streamline quality assurance processes with the Quality Management app. Monitor and manage quality standards efficiently as the app evolves. Designed to support ongoing improvements, this solution helps users oversee quality initiatives and maintain compliance within their organization.</Description>
-  <CommitMessage></CommitMessage>
+  <CommitMessage xsi:nil="true"></CommitMessage>
   <Publisher></Publisher>
   <AuthorizationReferences>[]</AuthorizationReferences>
   <ConnectionReferences>{}</ConnectionReferences>
-  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"Quality Orders (cache)":{"entitySetName":"cog_qualityorders","logicalName":"cog_qualityorder"},"cog_qualitytestlines":{"entitySetName":"cog_qualitytestlines","logicalName":"cog_qualitytestline"},"Quality Test Lines (cache)":{"entitySetName":"cog_qualitytestlines","logicalName":"cog_qualitytestline"},"cog_testoutcomes":{"entitySetName":"cog_testoutcomes","logicalName":"cog_testoutcome"},"Test Outcomes (cache)":{"entitySetName":"cog_testoutcomes","logicalName":"cog_testoutcome"},"cog_resultsheets":{"entitySetName":"cog_resultsheets","logicalName":"cog_resultsheet"},"Result Sheets (draft)":{"entitySetName":"cog_resultsheets","logicalName":"cog_resultsheet"},"cog_resultentries":{"entitySetName":"cog_resultentries","logicalName":"cog_resultentry"},"Result Entries (draft)":{"entitySetName":"cog_resultentries","logicalName":"cog_resultentry"},"cog_outboxes":{"entitySetName":"cog_outboxes","logicalName":"cog_outbox"},"Outbox":{"entitySetName":"cog_outboxes","logicalName":"cog_outbox"},"cog_problemtypes":{"entitySetName":"cog_problemtypes","logicalName":"cog_problemtype"},"Problem Types (cache)":{"entitySetName":"cog_problemtypes","logicalName":"cog_problemtype"},"cog_accounts":{"entitySetName":"cog_accounts","logicalName":"cog_account"},"Accounts (cache)":{"entitySetName":"cog_accounts","logicalName":"cog_account"}}}}</DatabaseReferences>
+  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"Quality Orders (cache)":{"entitySetName":"cog_qualityorders","logicalName":"cog_qualityorder"},"cog_qualitytestlines":{"entitySetName":"cog_qualitytestlines","logicalName":"cog_qualitytestline"},"Quality Test Lines (cache)":{"entitySetName":"cog_qualitytestlines","logicalName":"cog_qualitytestline"},"cog_testoutcomes":{"entitySetName":"cog_testoutcomes","logicalName":"cog_testoutcome"},"Test Outcomes (cache)":{"entitySetName":"cog_testoutcomes","logicalName":"cog_testoutcome"},"cog_resultsheets":{"entitySetName":"cog_resultsheets","logicalName":"cog_resultsheet"},"Result Sheets (draft)":{"entitySetName":"cog_resultsheets","logicalName":"cog_resultsheet"},"cog_resultentries":{"entitySetName":"cog_resultentries","logicalName":"cog_resultentry"},"Result Entries (draft)":{"entitySetName":"cog_resultentries","logicalName":"cog_resultentry"},"cog_outboxes":{"entitySetName":"cog_outboxes","logicalName":"cog_outbox"},"Outbox":{"entitySetName":"cog_outboxes","logicalName":"cog_outbox"},"cog_problemtypes":{"entitySetName":"cog_problemtypes","logicalName":"cog_problemtype"},"Problem Types (cache)":{"entitySetName":"cog_problemtypes","logicalName":"cog_problemtype"},"cog_accounts":{"entitySetName":"cog_accounts","logicalName":"cog_account"},"Accounts (cache)":{"entitySetName":"cog_accounts","logicalName":"cog_account"},"cog_items":{"entitySetName":"cog_items","logicalName":"cog_item"},"Items (cache)":{"entitySetName":"cog_items","logicalName":"cog_item"}}}}</DatabaseReferences>
   <AppComponents>[]</AppComponents>
   <AppComponentDependencies>[]</AppComponentDependencies>
   <CanConsumeAppPass>1</CanConsumeAppPass>
@@ -24,7 +24,7 @@
   <AdminControlBypassConsent>0</AdminControlBypassConsent>
   <EmbeddedApp xsi:nil="true"></EmbeddedApp>
   <IntroducedVersion>1.0</IntroducedVersion>
-  <CdsDependencies>{"cdsdependencies":[{"componenttype":1,"logicalname":"cog_qualityorder"},{"componenttype":1,"logicalname":"cog_qualitytestline"},{"componenttype":1,"logicalname":"cog_testoutcome"},{"componenttype":1,"logicalname":"cog_resultsheet"},{"componenttype":1,"logicalname":"cog_resultentry"},{"componenttype":1,"logicalname":"cog_outbox"},{"componenttype":1,"logicalname":"cog_problemtype"},{"componenttype":1,"logicalname":"cog_account"}]}</CdsDependencies>
+  <CdsDependencies>{"cdsdependencies":[{"logicalname":"cog_qualityorder","componenttype":1},{"logicalname":"cog_qualitytestline","componenttype":1},{"logicalname":"cog_testoutcome","componenttype":1},{"logicalname":"cog_resultsheet","componenttype":1},{"logicalname":"cog_resultentry","componenttype":1},{"logicalname":"cog_outbox","componenttype":1},{"logicalname":"cog_problemtype","componenttype":1},{"logicalname":"cog_account","componenttype":1},{"logicalname":"cog_item","componenttype":1}]}</CdsDependencies>
   <IsCustomizable>1</IsCustomizable>
   <BackgroundImageUri>/CanvasApps/cog_qualitymanagement_a469f_BackgroundImageUri</BackgroundImageUri>
   <DocumentUri>/CanvasApps/cog_qualitymanagement_a469f_DocumentUri.msapp</DocumentUri>

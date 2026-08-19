@@ -47,12 +47,24 @@
           "runAfter": {},
           "type": "If",
           "expression": {
-            "not": {
-              "equals": [
-                "@triggerOutputs()?['body/cog_outboxstatus']",
-                2
-              ]
-            }
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_outboxstatus']",
+                    2
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_operationtype']",
+                    1
+                  ]
+                }
+              }
+            ]
           },
           "actions": {
             "Stop": {
@@ -215,6 +227,12 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "OutcomeId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
                                 }
                               }
                             }
@@ -267,7 +285,8 @@
                           "parameters": {
                             "entityName": "mserp_inventqualityorderlineresultentities",
                             "recordId": "@if(not(empty(items('Apply_to_each_line')?['TargetRecordId'])), items('Apply_to_each_line')?['TargetRecordId'], first(outputs('Resolve_target_row')?['body/value'])?['mserp_inventqualityorderlineresultentityid'])",
-                            "item/mserp_resultvalue": "@float(items('Apply_to_each_line')?['ResultValue'])"
+                            "item/mserp_resultvalue": "@float(coalesce(items('Apply_to_each_line')?['ResultValue'], 0))",
+                            "item/mserp_qualitytestvariableoutcomeid": "@coalesce(items('Apply_to_each_line')?['OutcomeId'], '')"
                           }
                         }
                       }

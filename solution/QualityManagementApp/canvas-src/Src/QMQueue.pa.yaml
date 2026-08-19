@@ -84,9 +84,9 @@ Screens:
             - QQ_RowFill:
                 Control: Rectangle@2.3.0
                 Properties:
-                  OnSelect: =Select(Parent)
                   Fill: =RGBA(255, 255, 255, 1)
                   Height: =83
+                  OnSelect: =Select(Parent)
                   Width: =Parent.TemplateWidth
             - QQ_Name:
                 Control: Label@2.5.1

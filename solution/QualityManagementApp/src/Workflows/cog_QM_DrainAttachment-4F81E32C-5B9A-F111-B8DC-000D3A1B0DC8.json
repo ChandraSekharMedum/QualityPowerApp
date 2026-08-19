@@ -236,9 +236,31 @@
                       }
                     }
                   },
-                  "Create_the_staged_file": {
+                  "Read_the_result_line": {
                     "runAfter": {
                       "Fail_if_no_attachment_row": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "ListRecords"
+                      },
+                      "parameters": {
+                        "entityName": "mserp_inventqualityorderlineresultentities",
+                        "$select": "mserp_resultlinenumber,mserp_qualityordersequencenumber",
+                        "$filter": "@concat('mserp_dataareaid eq ''', body('Parse_payload')?['Company'], ''' and mserp_qualityordernumber eq ''', first(outputs('Read_the_attachment')?['body/value'])?['cog_qualityordernumber'], ''' and mserp_qualityordersequencenumber eq ', string(coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_testsequence'], 0)))",
+                        "$top": 1
+                      }
+                    }
+                  },
+                  "Create_the_staged_file": {
+                    "runAfter": {
+                      "Read_the_result_line": [
                         "Succeeded"
                       ]
                     },
@@ -256,9 +278,9 @@
                         "item/mserp_displayordernumber": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_qualityordernumber']",
                         "item/mserp_testid": "@coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_testid'], '')",
                         "item/mserp_testsequence": "@int(coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_testsequence'], 0))",
-                        "item/mserp_linenum": "@float(coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_linenum'], 0))",
+                        "item/mserp_linenum": "@float(coalesce(first(outputs('Read_the_result_line')?['body/value'])?['mserp_resultlinenumber'], 1))",
                         "item/mserp_filename": "@coalesce(first(outputs('Read_the_attachment')?['body/value'])?['cog_filename'], 'photo.jpg')",
-                        "item/mserp_formname": "InventQualityOrder",
+                        "item/mserp_formname": "Quality",
                         "item/mserp_imagevarchar": "@first(outputs('Read_the_attachment')?['body/value'])?['cog_base64']",
                         "item/mserp_dataareaid": "@body('Parse_payload')?['Company']"
                       }

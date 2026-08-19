@@ -6,7 +6,7 @@
       <LocalizedName description="Quality Management App" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>0.1.9.0</Version>
+    <Version>0.1.11.0</Version>
     <Managed>2</Managed>
     <Publisher>
       <UniqueName>ColumbusGlobal</UniqueName>
@@ -155,6 +155,12 @@
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>
         <Dependent type="1" schemaName="mserp_inventqualityorderlineentitypowerapp" displayName="Quality order lines (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="29" displayName="cog_QM_DrainAttachment" id="{4f81e32c-5b9a-f111-b8dc-000d3a1b0dc8}" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="mserp_inventqualityorderlineresultentity" displayName="Quality order line results (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
