@@ -58,16 +58,51 @@ Both are additive and harmless, but neither is used.
 
 ## 4. Why it is blocked
 
-Every purchase line tried was rejected:
+### The demo app's field set, replicated exactly
+
+The business confirmed the intended behaviour: **when the user picks a purchase order and line,
+the dimensions are copied from the PO line**, and this works in `usdemo01`. That is correct, and
+replicating it here changed the results — so the earlier claim that "nothing on the app side
+changes the outcome" was too absolute.
+
+What `QOPurchScreen` sends, copied from the line and its header:
 
 ```
-Inventory dimension Owner is inactive and may consequently not be specified.
+'Item number'  Site  'Warehouse (WarehouseId)'  'Inventory status'  'Reference lot'
+'Account selection'  <- the VENDOR, from the PO header. Easy to miss and it matters
+'Reference number'   'Product name'   'Test group'   'Reference type (ReferenceType)'
+'Dimension number': "AllBlank"
 ```
 
-Tested across sites 1, 2 and 3 and a dozen items, with and without product dimensions, with and
-without `Dimension number = "AllBlank"`, and with Owner explicitly blanked. **Nothing on the app
-side changes the outcome.** The error is raised when F&O resolves the item's dimensions, not from
-anything we send.
+Note it does **not** send product dimensions.
+
+Adding the vendor and `AllBlank` moved three of five items off the Owner error entirely:
+
+| Item | demo field set, no product dims | demo field set + product dims |
+|---|---|---|
+| T0001 | `Size is a product dimension and must be specified` | `Owner is inactive` |
+| T0004 | `Color is a product dimension and must be specified` | `Owner is inactive` |
+| T0005 | `Color is a product dimension and must be specified` | `Owner is inactive` |
+| T0002, T0003 | `Owner is inactive` | `Owner is inactive` |
+
+### The catch-22
+
+For an item with product dimensions, both paths fail **in this environment**:
+
+- **Omit** the product dimensions -> F&O demands them.
+- **Supply** them -> F&O resolves a full dimension set, which includes Owner, and Owner is
+  inactive.
+
+For an item without product dimensions (T0002, T0003) there is no path at all.
+
+### So the difference is the environment, not the app
+
+The demo works in `usdemo01` because **Owner is active there**, or those items' storage dimension
+groups exclude it. The same field set in `cus-con-sandbox` cannot get past it.
+
+The strongest evidence for the consultant is that **the error moves with the field set** — from
+"Owner is inactive" to "Size must be specified" and back — which pins it to dimension resolution
+rather than to a missing or malformed value.
 
 The one create that ever succeeded reused an existing quality order's reference (item `A0001`,
 PO `00000175`, lot `478937`) — and that lot is now marked by that order, so it cannot be reused:
@@ -100,8 +135,11 @@ that item's inventory dimensions can be satisfied. In this environment most cann
 
 ## 6. What to ask the F&O consultant
 
-1. **Can the Owner inventory dimension be activated**, or removed from the storage dimension
-   groups of the items quality inspects? This is the actual blocker.
+1. **Can the Owner inventory dimension be activated in `cus-con-sandbox`**, or removed from the
+   storage dimension groups of the items quality inspects? This is the actual blocker, and it is
+   the one difference from `usdemo01`, where the same approach works. Evidence to hand over: the
+   rejection changes from "Owner is inactive" to "Size is a product dimension and must be
+   specified" purely by varying which fields we send, which places it in dimension resolution.
 2. Which reference type do inspectors use in practice — purchase receipt, production, or
    inventory? It decides which picker gets built.
 3. Should the picker hide lots that already carry a quality order, or show them greyed with a
