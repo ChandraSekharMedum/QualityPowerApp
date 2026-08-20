@@ -84,6 +84,7 @@
       <RootComponent type="1" schemaName="cog_attachment" behavior="0" />
       <RootComponent type="1" schemaName="cog_item" behavior="0" />
       <RootComponent type="1" schemaName="cog_outbox" behavior="0" />
+      <RootComponent type="1" schemaName="cog_poline" behavior="0" />
       <RootComponent type="1" schemaName="cog_problemtype" behavior="0" />
       <RootComponent type="1" schemaName="cog_qualityorder" behavior="0" />
       <RootComponent type="1" schemaName="cog_qualitytestline" behavior="0" />
@@ -122,6 +123,7 @@
       <RootComponent type="29" id="{4f81e32c-5b9a-f111-b8dc-000d3a1b0dc8}" behavior="0" />
       <RootComponent type="29" id="{66e2784b-209a-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
       <RootComponent type="29" id="{83cad965-e299-f111-b8dc-7ced8dcb2e3e}" behavior="0" />
+      <RootComponent type="29" id="{e523f644-6d9c-f111-b8dc-000d3a1b06dc}" behavior="0" />
       <RootComponent type="29" id="{f7aff07f-159a-f111-b8dc-3833c5e44e92}" behavior="0" />
       <RootComponent type="300" schemaName="cog_qualitymanagement_a469f" behavior="0" />
     </RootComponents>
@@ -143,6 +145,12 @@
           <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
         </Required>
         <Dependent type="1" schemaName="mserp_inventproblemtypedataentity" displayName="Problem types (mserp)" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="mserp_inventqualityorderheaderentity" displayName="Quality orders (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">
+          <package appName="Microsoft Operations Virtual Entity" version="2.20.3417.1">MicrosoftOperationsVEAnchor (2.20.3417.1)</package>
+        </Required>
+        <Dependent type="29" displayName="cog_QM_DrainQualityOrder" id="{e523f644-6d9c-f111-b8dc-000d3a1b06dc}" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="mserp_inventqualityorderheaderentity" displayName="Quality orders (mserp)" solution="MicrosoftOperationsERPVE (2.20.3417.1)">

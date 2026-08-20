@@ -1,0 +1,405 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "cog_QMConnRef_Dataverse": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cog_QMConnRef_Dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_an_outbox_row_is_created": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cog_outbox",
+              "subscriptionRequest/scope": 4
+            }
+          }
+        }
+      },
+      "actions": {
+        "Exit_unless_a_queued_order": {
+          "runAfter": {},
+          "type": "If",
+          "expression": {
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_outboxstatus']",
+                    2
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/cog_operationtype']",
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Stop": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          }
+        },
+        "Claim_the_outbox_row": {
+          "runAfter": {
+            "Exit_unless_a_queued_order": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+              "item/cog_outboxstatus": 3,
+              "item/cog_attempts": "@add(coalesce(triggerOutputs()?['body/cog_attempts'], 0), 1)"
+            }
+          }
+        },
+        "Check_for_an_already_confirmed_twin": {
+          "runAfter": {
+            "Claim_the_outbox_row": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "cog_QMConnRef_Dataverse",
+              "connectionReferenceName": "cog_QMConnRef_Dataverse",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "cog_outboxes",
+              "$select": "cog_outboxid,cog_processedon",
+              "$filter": "@concat('cog_correlationid eq ''', triggerOutputs()?['body/cog_correlationid'], ''' and cog_outboxstatus eq 4 and cog_outboxid ne ', triggerOutputs()?['body/cog_outboxid'])",
+              "$top": 1
+            }
+          }
+        },
+        "Route_duplicate_or_process": {
+          "runAfter": {
+            "Check_for_an_already_confirmed_twin": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "greater": [
+              "@length(outputs('Check_for_an_already_confirmed_twin')?['body/value'])",
+              0
+            ]
+          },
+          "actions": {
+            "Mark_as_duplicate": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "cog_QMConnRef_Dataverse",
+                  "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord"
+                },
+                "parameters": {
+                  "entityName": "cog_outboxes",
+                  "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                  "item/cog_outboxstatus": 6,
+                  "item/cog_processedon": "@utcNow()",
+                  "item/cog_lasterror": "@concat('Skipped: correlation ', triggerOutputs()?['body/cog_correlationid'], ' was already confirmed')"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Process_the_submission": {
+                "runAfter": {},
+                "type": "Scope",
+                "actions": {
+                  "Parse_payload": {
+                    "runAfter": {},
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@triggerOutputs()?['body/cog_payload']",
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "Operation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "CorrelationId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "POLineId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "Company": {
+                            "type": "string"
+                          },
+                          "ReferenceType": {
+                            "type": [
+                              "integer",
+                              "string"
+                            ]
+                          },
+                          "InventRefId": {
+                            "type": "string"
+                          },
+                          "ReferenceLotId": {
+                            "type": "string"
+                          },
+                          "ItemNumber": {
+                            "type": "string"
+                          },
+                          "ProductName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "SiteId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "WarehouseId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "InventoryStatus": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "AccountRelation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "TestGroupId": {
+                            "type": "string"
+                          },
+                          "Quantity": {
+                            "type": [
+                              "number",
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "ConfigurationId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "ColorId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "SizeId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "StyleId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Create_the_quality_order": {
+                    "runAfter": {
+                      "Parse_payload": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "CreateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "mserp_inventqualityorderheaderentities",
+                        "item/mserp_referencetype": "@int(body('Parse_payload')?['ReferenceType'])",
+                        "item/mserp_inventrefid": "@body('Parse_payload')?['InventRefId']",
+                        "item/mserp_referenceinventorylotid": "@body('Parse_payload')?['ReferenceLotId']",
+                        "item/mserp_itemnumber": "@body('Parse_payload')?['ItemNumber']",
+                        "item/mserp_productname": "@coalesce(body('Parse_payload')?['ProductName'], '')",
+                        "item/mserp_inventorysiteid": "@coalesce(body('Parse_payload')?['SiteId'], '')",
+                        "item/mserp_warehouseid": "@coalesce(body('Parse_payload')?['WarehouseId'], '')",
+                        "item/mserp_inventorystatusid": "@coalesce(body('Parse_payload')?['InventoryStatus'], '')",
+                        "item/mserp_publicaccountrelation": "@coalesce(body('Parse_payload')?['AccountRelation'], '')",
+                        "item/mserp_qualitytestgroupid": "@body('Parse_payload')?['TestGroupId']",
+                        "item/mserp_inventoryquantity": "@float(coalesce(body('Parse_payload')?['Quantity'], 0))",
+                        "item/mserp_inventdimensionid": "AllBlank",
+                        "item/mserp_productconfigurationid": "@coalesce(body('Parse_payload')?['ConfigurationId'], '')",
+                        "item/mserp_productcolorid": "@coalesce(body('Parse_payload')?['ColorId'], '')",
+                        "item/mserp_productsizeid": "@coalesce(body('Parse_payload')?['SizeId'], '')",
+                        "item/mserp_productstyleid": "@coalesce(body('Parse_payload')?['StyleId'], '')",
+                        "item/mserp_dataareaid": "@body('Parse_payload')?['Company']"
+                      }
+                    }
+                  }
+                }
+              },
+              "Confirm_the_outbox_row": {
+                "runAfter": {
+                  "Process_the_submission": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 4,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": "",
+                    "item/cog_fnoresponse": "@string(body('Create_the_quality_order'))"
+                  }
+                }
+              },
+              "Flag_needs_attention": {
+                "runAfter": {
+                  "Process_the_submission": [
+                    "Failed",
+                    "TimedOut",
+                    "Skipped"
+                  ]
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "cog_QMConnRef_Dataverse",
+                    "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "cog_outboxes",
+                    "recordId": "@triggerOutputs()?['body/cog_outboxid']",
+                    "item/cog_outboxstatus": 5,
+                    "item/cog_processedon": "@utcNow()",
+                    "item/cog_lasterror": "@substring(string(coalesce(last(result('Process_the_submission'))?['outputs']?['body'], result('Process_the_submission'))), 0, min(3900, length(string(coalesce(last(result('Process_the_submission'))?['outputs']?['body'], result('Process_the_submission'))))))"
+                  }
+                }
+              },
+              "Release_the_line_again": {
+                "runAfter": {
+                  "Flag_needs_attention": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "If",
+                "expression": {
+                  "not": {
+                    "equals": [
+                      "@coalesce(body('Parse_payload')?['POLineId'], '')",
+                      ""
+                    ]
+                  }
+                },
+                "actions": {
+                  "Unhide_the_po_line": {
+                    "runAfter": {},
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "cog_QMConnRef_Dataverse",
+                        "connectionReferenceName": "cog_QMConnRef_Dataverse",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "operationId": "UpdateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "cog_polines",
+                        "recordId": "@body('Parse_payload')?['POLineId']",
+                        "item/cog_hasqualityorder": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

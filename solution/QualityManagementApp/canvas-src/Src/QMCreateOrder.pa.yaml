@@ -1,0 +1,529 @@
+# ************************************************************************************************
+# Warning: YAML source code for Canvas Apps should only be used to review changes made within Power Apps Studio and for minor edits (Preview).
+# Use the maker portal to create and edit your Power Apps.
+# 
+# The schema file for Canvas Apps is available at https://go.microsoft.com/fwlink/?linkid=2304907
+# 
+# For more information, visit https://go.microsoft.com/fwlink/?linkid=2292623
+# ************************************************************************************************
+Screens:
+  QMCreateOrder:
+    Properties:
+      Fill: =RGBA(244, 246, 247, 1)
+      LoadingSpinnerColor: =RGBA(13, 98, 115, 1)
+      OnVisible: |
+        =Set(varQoCompany,
+             If(IsBlank(varQoCompany),
+                Coalesce(First('PO Lines (cache)').cog_company, "usmf"),
+                varQoCompany));
+         Set(varQoLine, Blank());
+         Set(varQoLineKey, "");
+         Set(varQoQty, 0);
+         Set(varQoTestGroup, "")
+    Children:
+      - QO_HeaderBar:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =56
+            PaddingLeft: =56
+            Size: =18
+            Text: ="Create Quality Order"
+            Width: =Parent.Width
+      - QO_BackButton:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =RGBA(255, 255, 255, 1)
+            BorderThickness: =1
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =32
+            OnSelect: =Back()
+            Size: =12
+            Text: ="<"
+            Width: =40
+            X: =8
+            Y: =12
+      - QO_SyncStrip:
+          Control: Label@2.5.1
+          Properties:
+            Color: =If(Connection.Connected, RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Fill: =If(Connection.Connected, RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =28
+            PaddingLeft: =16
+            Size: =9
+            Text: |
+              =If(Connection.Connected,
+                  "Online  -  the quality order reaches F&O within about 15 seconds of queuing",
+                  "Offline  -  the quality order is held in the queue and sent when you reconnect")
+            Width: =Parent.Width
+            Y: =56
+      - QO_EnvNote:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(138, 86, 6, 1)
+            Fill: =RGBA(248, 235, 214, 1)
+            Height: =24
+            PaddingLeft: =16
+            Size: =8
+            Text: |
+              ="Some items are refused by F&O for inventory-dimension reasons.  " &
+               "A refused order stays in the queue with F&O's reason - nothing is lost, " &
+               "and the line becomes available again."
+            Width: =Parent.Width
+            Y: =84
+      - QO_L1:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =20
+            Size: =8
+            Text: ="1   COMPANY"
+            Width: =650
+            X: =16
+            Y: =116
+      - QO_CompanyGallery:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =76
+            Items: =SortByColumns(Distinct('PO Lines (cache)', cog_company), "Value", SortOrder.Ascending)
+            OnSelect: |
+              =Set(varQoCompany, ThisItem.Value);
+               Set(varQoLine, Blank());
+               Set(varQoLineKey, "");
+               Set(varQoQty, 0);
+               Set(varQoTestGroup, "")
+            TemplatePadding: =0
+            TemplateSize: =36
+            Width: =650
+            X: =16
+            Y: =140
+          Children:
+            - QO_CoRowFill:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |
+                    =If(ThisItem.Value = varQoCompany,
+                        RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+                  Height: =35
+                  OnSelect: =Select(Parent)
+                  Width: =Parent.TemplateWidth
+            - QO_CoName:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(13, 98, 115, 1)
+                  FontWeight: |
+                    =If(ThisItem.Value = varQoCompany, FontWeight.Semibold, FontWeight.Normal)
+                  Height: =24
+                  OnSelect: |
+                    =Set(varQoCompany, ThisItem.Value);
+                     Set(varQoLine, Blank());
+                     Set(varQoLineKey, "");
+                     Set(varQoQty, 0);
+                     Set(varQoTestGroup, "")
+                  Size: =11
+                  Text: |
+                    =Upper(ThisItem.Value) & "   -   " &
+                     CountRows(Filter('PO Lines (cache)', cog_company = ThisItem.Value)) &
+                     " purchase order lines cached"
+                  Underline: =true
+                  Width: =Parent.TemplateWidth - 120
+                  X: =12
+                  Y: =6
+            - QO_CoTick:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =RGBA(32, 97, 61, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =24
+                  OnSelect: |
+                    =Set(varQoCompany, ThisItem.Value);
+                     Set(varQoLine, Blank());
+                     Set(varQoLineKey, "");
+                     Set(varQoQty, 0);
+                     Set(varQoTestGroup, "")
+                  Size: =8
+                  Text: =If(ThisItem.Value = varQoCompany, "selected", "")
+                  Width: =92
+                  X: =Parent.TemplateWidth - 104
+                  Y: =6
+            - QO_CoRule:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(210, 220, 223, 1)
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =35
+      - QO_L2:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =20
+            Size: =8
+            Text: ="2   PURCHASE ORDER LINE TO INSPECT"
+            Width: =650
+            X: =16
+            Y: =224
+      - QO_LineSearch:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =""
+            Height: =36
+            HintText: ="Search purchase order or item number"
+            Size: =11
+            Width: =650
+            X: =16
+            Y: =248
+      - QO_LineGallery:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =372
+            Items: |
+              =SortByColumns(
+                 Filter('PO Lines (cache)',
+                        cog_company = varQoCompany,
+                        cog_hasqualityorder = 0,
+                        (IsBlank(QO_LineSearch.Text) ||
+                         StartsWith(cog_purchaseordernumber, QO_LineSearch.Text) ||
+                         StartsWith(cog_itemnumber, QO_LineSearch.Text))),
+                 "cog_purchaseordernumber", SortOrder.Descending)
+            OnSelect: |
+              =Set(varQoLine, ThisItem);
+               Set(varQoLineKey, Text(ThisItem.cog_polineid));
+               Set(varQoQty, ThisItem.cog_orderedquantity)
+            TemplatePadding: =0
+            TemplateSize: =52
+            Width: =650
+            X: =16
+            Y: =292
+          Children:
+            - QO_LineRowFill:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |
+                    =If(Text(ThisItem.cog_polineid) = varQoLineKey,
+                        RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+                  Height: =51
+                  OnSelect: =Select(Parent)
+                  Width: =Parent.TemplateWidth
+            - QO_LinePo:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(13, 98, 115, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  OnSelect: |
+                    =Set(varQoLine, ThisItem);
+                     Set(varQoLineKey, Text(ThisItem.cog_polineid));
+                     Set(varQoQty, ThisItem.cog_orderedquantity)
+                  Size: =11
+                  Text: |
+                    =ThisItem.cog_purchaseordernumber & "  /  " &
+                     Text(ThisItem.cog_linenumber, "0.##")
+                  Underline: =true
+                  X: =12
+                  Y: =4
+            - QO_LineDesc:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(16, 26, 30, 1)
+                  Height: =44
+                  OnSelect: |
+                    =Set(varQoLine, ThisItem);
+                     Set(varQoLineKey, Text(ThisItem.cog_polineid));
+                     Set(varQoQty, ThisItem.cog_orderedquantity)
+                  Size: =10
+                  Text: |
+                    =ThisItem.cog_itemnumber & "  -  " & ThisItem.cog_itemname &
+                     Char(10) & "lot " & ThisItem.cog_inventorylotid &
+                     "   -   " & ThisItem.cog_siteid & " / " & ThisItem.cog_warehouseid
+                  Width: =Parent.TemplateWidth - 182
+                  X: =170
+                  Y: =4
+            - QO_LineRule:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(210, 220, 223, 1)
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =51
+      - QO_LineEmpty:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(107, 125, 132, 1)
+            Height: =60
+            Size: =10
+            Text: |
+              ="No purchase order lines available for " & Upper(varQoCompany) & "." & Char(10) &
+               "Lines already carrying a quality order are hidden."
+            Visible: |
+              =CountRows(Filter('PO Lines (cache)',
+                                cog_company = varQoCompany,
+                                cog_hasqualityorder = 0)) = 0
+            Width: =650
+            X: =16
+            Y: =360
+      - QO_R1:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =20
+            Size: =8
+            Text: ="3   WHAT WILL BE SENT TO F&O"
+            Width: =650
+            X: =700
+            Y: =116
+      - QO_DetailPanel:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =176
+            Width: =650
+            X: =700
+            Y: =140
+      - QO_DetailKeys:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            Height: =160
+            PaddingLeft: =12
+            Size: =9
+            Text: |
+              ="Item" & Char(10) & "Reference lot" & Char(10) & "Site / warehouse" &
+               Char(10) & "Inventory status" & Char(10) & "Vendor" & Char(10) &
+               "Product dimensions"
+            Width: =180
+            X: =712
+            Y: =148
+      - QO_DetailValues:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(16, 26, 30, 1)
+            Height: =160
+            Size: =9
+            Text: |
+              =If(IsBlank(varQoLineKey),
+                  "-" & Char(10) & "-" & Char(10) & "-" & Char(10) & "-" & Char(10) & "-" &
+                  Char(10) & "-",
+                  varQoLine.cog_itemnumber & "  -  " & varQoLine.cog_itemname & Char(10) &
+                  varQoLine.cog_inventorylotid & Char(10) &
+                  varQoLine.cog_siteid & " / " & varQoLine.cog_warehouseid & Char(10) &
+                  Coalesce(varQoLine.cog_inventorystatusid, "-") & Char(10) &
+                  Coalesce(varQoLine.cog_vendoraccount, "-") & Char(10) &
+                  If(IsBlank(varQoLine.cog_configurationid) &&
+                     IsBlank(varQoLine.cog_colorid) &&
+                     IsBlank(varQoLine.cog_sizeid) &&
+                     IsBlank(varQoLine.cog_styleid),
+                     "none on this item",
+                     Trim(Coalesce(varQoLine.cog_configurationid, "") & " " &
+                          Coalesce(varQoLine.cog_colorid, "") & " " &
+                          Coalesce(varQoLine.cog_sizeid, "") & " " &
+                          Coalesce(varQoLine.cog_styleid, ""))))
+            Width: =440
+            X: =900
+            Y: =148
+      - QO_R2:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =20
+            Size: =8
+            Text: ="4   TEST GROUP"
+            Width: =650
+            X: =700
+            Y: =326
+      - QO_TestGroupGallery:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =144
+            Items: |
+              =SortByColumns(
+                 Distinct(Filter('Quality Orders (cache)',
+                                 cog_company = varQoCompany,
+                                 !IsBlank(cog_testgroupid)),
+                          cog_testgroupid),
+                 "Value", SortOrder.Ascending)
+            OnSelect: =Set(varQoTestGroup, ThisItem.Value)
+            TemplatePadding: =0
+            TemplateSize: =36
+            Width: =650
+            X: =700
+            Y: =350
+          Children:
+            - QO_TgRowFill:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |
+                    =If(ThisItem.Value = varQoTestGroup,
+                        RGBA(222, 238, 228, 1), RGBA(255, 255, 255, 1))
+                  Height: =35
+                  OnSelect: =Select(Parent)
+                  Width: =Parent.TemplateWidth
+            - QO_TgName:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(13, 98, 115, 1)
+                  FontWeight: |
+                    =If(ThisItem.Value = varQoTestGroup, FontWeight.Semibold, FontWeight.Normal)
+                  Height: =24
+                  OnSelect: =Set(varQoTestGroup, ThisItem.Value)
+                  Size: =11
+                  Text: =ThisItem.Value
+                  Underline: =true
+                  Width: =Parent.TemplateWidth - 24
+                  X: =12
+                  Y: =6
+            - QO_TgRule:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(210, 220, 223, 1)
+                  Height: =1
+                  Width: =Parent.TemplateWidth
+                  Y: =35
+      - QO_TgNote:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            Height: =20
+            Size: =8
+            Text: |
+              ="Test groups come from orders already cached for this company."
+            Visible: |
+              =CountRows(Distinct(Filter('Quality Orders (cache)',
+                                         cog_company = varQoCompany,
+                                         !IsBlank(cog_testgroupid)),
+                                  cog_testgroupid)) > 0
+            Width: =650
+            X: =700
+            Y: =496
+      - QO_R3:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =20
+            Size: =8
+            Text: ="5   QUANTITY TO INSPECT"
+            Width: =650
+            X: =700
+            Y: =520
+      - QO_QtyInput:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =Text(varQoQty, "0.####")
+            Format: =TextFormat.Number
+            Height: =36
+            Size: =11
+            Width: =180
+            X: =700
+            Y: =544
+      - QO_QtyNote:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(107, 125, 132, 1)
+            Height: =36
+            Size: =9
+            Text: |
+              =If(IsBlank(varQoLineKey),
+                  "Pick a line first.",
+                  "Ordered on this line: " & Text(varQoLine.cog_orderedquantity, "0.####"))
+            Width: =450
+            X: =896
+            Y: =544
+      - QO_Validation:
+          Control: Label@2.5.1
+          Properties:
+            Color: |
+              =If(!IsBlank(varQoLineKey) &&
+                  !IsBlank(varQoTestGroup) &&
+                  Coalesce(Value(QO_QtyInput.Text), 0) > 0,
+                  RGBA(32, 97, 61, 1), RGBA(138, 86, 6, 1))
+            Fill: |
+              =If(!IsBlank(varQoLineKey) &&
+                  !IsBlank(varQoTestGroup) &&
+                  Coalesce(Value(QO_QtyInput.Text), 0) > 0,
+                  RGBA(222, 238, 228, 1), RGBA(248, 235, 214, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =44
+            PaddingLeft: =12
+            PaddingRight: =12
+            Size: =10
+            Text: |
+              =If(!IsBlank(varQoLineKey) &&
+                  !IsBlank(varQoTestGroup) &&
+                  Coalesce(Value(QO_QtyInput.Text), 0) > 0,
+                  "Ready to queue.  F&O assigns the order number on acceptance.",
+                  "Still needed:  " &
+                  If(IsBlank(varQoLineKey), "purchase order line   ", "") &
+                  If(IsBlank(varQoTestGroup), "test group   ", "") &
+                  If(Coalesce(Value(QO_QtyInput.Text), 0) <= 0, "quantity   ", ""))
+            Width: =650
+            X: =700
+            Y: =592
+      - QO_SubmitButton:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =RGBA(255, 255, 255, 1)
+            DisplayMode: |
+              =If(!IsBlank(varQoLineKey) &&
+                  !IsBlank(varQoTestGroup) &&
+                  Coalesce(Value(QO_QtyInput.Text), 0) > 0,
+                  DisplayMode.Edit, DisplayMode.Disabled)
+            Fill: =RGBA(13, 98, 115, 1)
+            Height: =44
+            OnSelect: |
+              =Set(varQoCorrelationId, Text(GUID()));
+               Patch(Outbox, Defaults(Outbox),
+                 { cog_name: "CreateQualityOrder " & varQoLine.cog_purchaseordernumber &
+                             " / " & Text(varQoLine.cog_linenumber, "0.##"),
+                   cog_operationtype: 4,
+                   cog_correlationid: varQoCorrelationId,
+                   cog_company: varQoCompany,
+                   cog_outboxstatus: 2,
+                   cog_attempts: 0,
+                   cog_queuedon: Now(),
+                   cog_payload:
+                     "{""Operation"":""CreateQualityOrder"",""CorrelationId"":""" & varQoCorrelationId &
+                     """,""POLineId"":""" & Text(varQoLine.cog_polineid) &
+                     """,""Company"":""" & varQoCompany &
+                     """,""ReferenceType"":200000002" &
+                     ",""InventRefId"":""" & varQoLine.cog_purchaseordernumber &
+                     """,""ReferenceLotId"":""" & varQoLine.cog_inventorylotid &
+                     """,""ItemNumber"":""" & varQoLine.cog_itemnumber &
+                     """,""ProductName"":""" & Substitute(Coalesce(varQoLine.cog_itemname, ""), """", "") &
+                     """,""SiteId"":""" & Coalesce(varQoLine.cog_siteid, "") &
+                     """,""WarehouseId"":""" & Coalesce(varQoLine.cog_warehouseid, "") &
+                     """,""InventoryStatus"":""" & Coalesce(varQoLine.cog_inventorystatusid, "") &
+                     """,""AccountRelation"":""" & Coalesce(varQoLine.cog_vendoraccount, "") &
+                     """,""TestGroupId"":""" & varQoTestGroup &
+                     """,""Quantity"":" & Text(Coalesce(Value(QO_QtyInput.Text), 0), "0.####") &
+                     ",""ConfigurationId"":""" & Coalesce(varQoLine.cog_configurationid, "") &
+                     """,""ColorId"":""" & Coalesce(varQoLine.cog_colorid, "") &
+                     """,""SizeId"":""" & Coalesce(varQoLine.cog_sizeid, "") &
+                     """,""StyleId"":""" & Coalesce(varQoLine.cog_styleid, "") & """}" });
+               Patch('PO Lines (cache)', varQoLine, { cog_hasqualityorder: 1 });
+               Notify("Quality order queued for " & varQoLine.cog_itemnumber,
+                      NotificationType.Success);
+               Set(varQoLine, Blank());
+               Set(varQoLineKey, "");
+               Set(varQoQty, 0);
+               Set(varQoTestGroup, "");
+               Reset(QO_LineSearch);
+               Navigate(QMQueue, ScreenTransition.None)
+            Size: =13
+            Text: ="Queue quality order"
+            Width: =650
+            X: =700
+            Y: =644

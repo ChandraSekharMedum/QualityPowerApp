@@ -270,29 +270,17 @@ Screens:
             Width: =650
             X: =700
             Y: =96
-      # Add picture, not the live Camera control. Camera rendered but produced nothing usable on a
-      # real device; this is the control the working demo app uses, and on a device it opens the
-      # camera or the gallery. Proven on the mobile app.
-      #
-      # ENCODE THE IMAGE CONTROL, NOT THE MEDIA, and keep the whole data URI.
-      # JSON(AT_AddMedia.Media, IncludeBinaryData) returns a blob reference (appres://...) about 40
-      # characters long, which F&O rejects with "The string is not a valid base 64 encoded string"
-      # while the size readout cheerfully shows 0 KB. Routing it through an Image control is what
-      # makes IncludeBinaryData inline the bytes.
-      #
-      # The old code also stripped the "data:image/...;base64," prefix. F&O stores raw base64
-      # happily but only ATTACHES the file when the full data URI is sent -- what the demo does.
       - AT_AddMedia:
-          Control: AddMedia
+          Control: AddMedia@2.2.1
           Properties:
             Height: =240
+            OnChange: |
+              =Set(varPhoto, AT_AddMedia.Media);
+               Set(varB64, Substitute(JSON(AT_Preview.Image, JSONFormat.IncludeBinaryData), """", ""))
             Size: =13
             Width: =320
             X: =700
             Y: =118
-            OnChange: |
-              =Set(varPhoto, AT_AddMedia.Media);
-               Set(varB64, Substitute(JSON(AT_Preview.Image, JSONFormat.IncludeBinaryData), """", ""))
       - AT_PreviewFrame:
           Control: Rectangle@2.3.0
           Properties:
@@ -318,7 +306,6 @@ Screens:
           Properties:
             Height: =240
             Image: =AT_AddMedia.Media
-            Visible: =true
             Width: =320
             X: =1030
             Y: =118

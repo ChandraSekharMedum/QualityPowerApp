@@ -4,6 +4,7 @@
   <EntityRelationship Name="business_unit_cog_attachment" />
   <EntityRelationship Name="business_unit_cog_item" />
   <EntityRelationship Name="business_unit_cog_outbox" />
+  <EntityRelationship Name="business_unit_cog_poline" />
   <EntityRelationship Name="business_unit_cog_problemtype" />
   <EntityRelationship Name="business_unit_cog_qualityorder" />
   <EntityRelationship Name="business_unit_cog_qualitytestline" />
@@ -23,6 +24,8 @@
   <EntityRelationship Name="lk_cog_item_modifiedby" />
   <EntityRelationship Name="lk_cog_outbox_createdby" />
   <EntityRelationship Name="lk_cog_outbox_modifiedby" />
+  <EntityRelationship Name="lk_cog_poline_createdby" />
+  <EntityRelationship Name="lk_cog_poline_modifiedby" />
   <EntityRelationship Name="lk_cog_problemtype_createdby" />
   <EntityRelationship Name="lk_cog_problemtype_modifiedby" />
   <EntityRelationship Name="lk_cog_qualityorder_createdby" />
@@ -39,6 +42,7 @@
   <EntityRelationship Name="owner_cog_attachment" />
   <EntityRelationship Name="owner_cog_item" />
   <EntityRelationship Name="owner_cog_outbox" />
+  <EntityRelationship Name="owner_cog_poline" />
   <EntityRelationship Name="owner_cog_problemtype" />
   <EntityRelationship Name="owner_cog_qualityorder" />
   <EntityRelationship Name="owner_cog_qualitytestline" />
@@ -49,6 +53,7 @@
   <EntityRelationship Name="team_cog_attachment" />
   <EntityRelationship Name="team_cog_item" />
   <EntityRelationship Name="team_cog_outbox" />
+  <EntityRelationship Name="team_cog_poline" />
   <EntityRelationship Name="team_cog_problemtype" />
   <EntityRelationship Name="team_cog_qualityorder" />
   <EntityRelationship Name="team_cog_qualitytestline" />
@@ -59,6 +64,7 @@
   <EntityRelationship Name="user_cog_attachment" />
   <EntityRelationship Name="user_cog_item" />
   <EntityRelationship Name="user_cog_outbox" />
+  <EntityRelationship Name="user_cog_poline" />
   <EntityRelationship Name="user_cog_problemtype" />
   <EntityRelationship Name="user_cog_qualityorder" />
   <EntityRelationship Name="user_cog_qualitytestline" />

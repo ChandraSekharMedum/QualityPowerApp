@@ -158,3 +158,101 @@ that item's inventory dimensions can be satisfied. In this environment most cann
 
 Nothing in that estimate is speculative — the data source is proven and the create is proven. It
 is waiting on the environment, not on design.
+
+---
+
+## 8. Correction: creation is PROVEN WORKING through the app path
+
+**QM-P3-001 · 2026-08-20 · `cus-con-sandbox`**
+
+Sections 1, 4 and 6 above say the build should pause until an F&O consultant activates the
+Owner dimension. **That recommendation is withdrawn.** A quality order was created end to end
+through the real app path on 2026-08-20:
+
+```
+F&O quality order 000420
+  item        M9201          test group  Enclosure
+  ref lot     012312         ref id      00000041   (PO line 2)
+  vendor      US-104         qty         2
+  site / wh   5 / 51         status      200000000
+```
+
+Queued as an outbox row (operationtype 4), drained by `cog_QM_DrainQualityOrder`, confirmed
+in **18 seconds**. F&O assigned `000420` from sequence `Inve_172` as predicted.
+
+### What section 4 got right, and what it got wrong
+
+Right: the field set. Sending the vendor as `mserp_publicaccountrelation` and
+`mserp_inventdimensionid = "AllBlank"` is exactly what makes the create acceptable, and this
+create used precisely that set with no product dimensions (M9201 has none).
+
+Wrong: the generalisation. "F&O rejects almost every create in this environment" was drawn
+from five items, T0001-T0005. M9201 is not one of them and it succeeds. Section 5 already
+warned that this had been misjudged in both directions from a single item -- and section 1
+then did it a third time, in the pessimistic direction.
+
+**The per-item conclusion in section 5 is the durable one.** Creation succeeds or fails per
+item on whether that item's inventory dimensions can be satisfied. Some items in this
+environment can. The consultant question in section 6 is still worth asking, because items
+whose storage dimension group includes Owner will still fail -- but it is no longer a
+blocker on building or shipping the screen.
+
+### Test groups are per-company and must be filtered
+
+First attempt failed with:
+
+```
+The value 'CreamTest' in field 'Test group' is not found in the related table 'Test groups'.
+```
+
+`CreamTest` is real, but not in `usmf`. `InventQualityTestGroupEntity` filtered to `usmf`
+returns exactly four: `Concentrat`, `Cone`, `Enclosure`, `Impedance`.
+
+`QMCreateOrder` sources its picker from
+`Distinct(Filter('Quality Orders (cache)', cog_company = varQoCompany), cog_testgroupid)`,
+which returns those same four -- so the screen is correct. **The company filter is
+load-bearing**; without it the picker offers other companies' groups and every create fails
+this validation. A dedicated `cog_TestGroup` cache would additionally surface groups not yet
+used by any cached order, and is the clean upgrade if that gap matters.
+
+### Two flow-authoring traps, both silent
+
+Both cost real time and neither produces a useful error.
+
+1. **Never reference an action inside a `Scope` from outside it.** `Flag_needs_attention` is
+   a sibling of `Process_the_submission`, so `outputs('Create_the_quality_order')` is illegal
+   there. Dataverse still reports the flow `1/2 Activated`, but Power Automate refuses to
+   register the trigger. The flow simply never fires and outbox rows sit at Queued with
+   `attempts=0` -- indistinguishable from the lost-webhook symptom `Repair-FlowTriggers.ps1`
+   documents, and a deactivate/reactivate cycle does NOT fix it. Use
+   `result('<ScopeName>')` instead.
+
+2. **`where()` and `filter()` do not exist** in the workflow definition language. Only
+   `first`, `last`, `take`, `skip`, `union` and friends. An unknown function SAVES cleanly
+   and the trigger arms, then the action fails at runtime and the outbox row strands at
+   Sending (status 3) forever -- claimed but never resolved, so nothing retries it.
+
+The working expression takes the create out of the scope result by position:
+
+```
+coalesce(last(result('Process_the_submission'))?['outputs']?['body'],
+         result('Process_the_submission'))
+```
+
+`last()` is correct because the scope runs `Parse_payload` then the create.
+
+### Put the F&O reason first, not the payload echo
+
+`string(result('Process_the_submission'))` leads with the echoed payload and every HTTP
+response header. Against `cog_lasterror`'s 3900-character cap the actual rejection was pushed
+off the end entirely, so the queue screen showed the user a wall of cookies. Taking the
+create's `outputs.body` puts F&O's sentence first, which is how the `CreamTest` error above
+became readable at all.
+
+### The optimistic hide must be reversible
+
+`QMCreateOrder` sets `cog_hasqualityorder = 1` on queue so two inspectors cannot book the
+same lot. When F&O refuses, that hiding is wrong. The flow's failure branch carries
+`POLineId` in the payload and resets the flag, verified on the `CreamTest` failure above.
+Without it a refused line stays invisible until the next sync -- which recomputes the flag
+from real F&O orders, but could be hours away and looks like the line vanished.
