@@ -16,13 +16,27 @@ Everything below was read from the live `cus-con-sandbox` environment, not from 
 | Solution | `QualityAPP_Mobile` ("Quality App Mobile") |
 | Version | 0.1.14.0, **unmanaged** |
 | Publisher | `ColumbusGlobal`, prefix `cog` |
-| Contents | 1 canvas app + 5 virtual-entity references |
+| Contents | 1 canvas app + F&O virtual-entity references |
 | Canvas app | `cog_qualityappmobile_33e3d`, phone layout 640 x 1136 portrait |
 | Screens | `MobOrders`, `MobResults`, `MobPhoto` |
 
-**There are no Dataverse tables, no Power Automate flows, no connection references and no
-custom security roles.** The app is online-only and talks to F&O directly, so there is no
-cache, outbox or sync machinery to move. That makes this a genuinely small deployment.
+**The app does use Dataverse tables — six of them — but every one is an F&O virtual table.**
+That distinction is the whole story of this deployment, so it is worth being precise about:
+
+| | Count | What it means for migration |
+|---|---:|---|
+| **Custom** (`cog_`) Dataverse tables | **0** | Nothing to create, nothing to migrate, no rows to move |
+| **F&O virtual** tables (`mserp_`) | **6** | Must be *generated* in the target, not imported. See section 4 |
+| of which bound as app data sources | 5 | Listed in `DatabaseReferences` |
+| of which a dependency only | 1 | `InventQualityOrderLineEntityPowerApp` - see "Entity 6 is a trap" |
+
+A virtual table is a live view onto F&O. It stores no data in Dataverse, which is why this
+app has no storage footprint and no data to migrate — but it is still a Dataverse table and
+still has to exist in the target environment before the app will open.
+
+**There are no Power Automate flows, no connection references and no custom security roles.**
+The app is online-only and talks to F&O directly, so there is no cache, outbox or sync
+machinery to move. That makes this a genuinely small deployment.
 
 ---
 
@@ -225,7 +239,7 @@ environment** as that application.
 | Test | This app |
 |---|---|
 | Does it read/write only F&O data? | **Yes.** Six F&O virtual entities, listed in section 2 |
-| Any custom Dataverse tables? | **None.** Section 1 |
+| Any custom (`cog_`) Dataverse tables? | **None.** All six tables are F&O virtual tables. Section 1 |
 | Any premium connectors? | **None.** No connection references at all |
 | Same environment as F&O? | **Yes.** Virtual entities only resolve in that environment |
 | Does it do anything unrelated to SCM? | **No.** It is a quality-inspection front end |
@@ -234,11 +248,11 @@ So for a user who already holds a Dynamics 365 Supply Chain Management licence, 
 an extension of the application they are licensed for, and **should carry no additional
 licence cost**.
 
-> **This is a contractual judgement, not a technical one, and I am not qualified to give it.**
-> "In the context of" is Microsoft's phrase and it is deliberately interpretive. Confirm it
-> with Columbus's licensing desk or the Microsoft partner account before quoting a customer.
-> The technical facts in the table above are what they will need in order to rule, and every
-> one of them was read from the live environment.
+> **This is a contractual judgement, not a technical one.** "In the context of" is Microsoft's
+> own phrase and it is deliberately interpretive. It must be confirmed with Columbus's
+> licensing desk or the Microsoft partner account before being quoted to a customer. The
+> technical facts in the table above are what a licensing specialist needs in order to rule,
+> and every one of them was read from the live environment rather than assumed.
 
 ### 10.2 List prices
 
@@ -281,23 +295,6 @@ in Dataverse. Photos are sent straight to F&O rather than staged locally.
 
 The 250 MB Dataverse database entitlement that comes with a Power Apps Premium licence is
 therefore ample, and the $40/GB add-on should not be needed for this solution.
-
-### 10.5 The tablet app is a different conversation
-
-`QualityManagementApp` is out of scope for this document, but if both apps are being migrated,
-be aware its licensing profile is materially worse and should be costed separately:
-
-| | Mobile | Tablet |
-|---|---|---|
-| Custom Dataverse tables | none | **11** (10 caches/drafts plus `cog_POLine`) |
-| Power Automate flows | none | **6** |
-| Connection references | none | 2 |
-| Dataverse storage | none | real, and grows with cache size |
-
-Custom tables holding copies of F&O data are harder to argue as "within the context of" the
-licensed D365 application than an app that reads F&O directly, and the flows raise a separate
-Power Automate question. That is not a conclusion, it is a flag: **the tablet app needs its
-own licensing review, and its answer may well differ from this one.**
 
 ### Sources
 
