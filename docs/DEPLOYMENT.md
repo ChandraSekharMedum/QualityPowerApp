@@ -201,3 +201,108 @@ Step 6 is the one that cannot be skipped or automated.
 | Photos attach to a test | There is no whole-order photo. |
 | Verdicts are F&O's | The app never computes pass/fail. |
 | Delegation | Fine at this scale (86 orders, 157 result rows). Above ~500 open orders the order picker needs re-testing for delegation against virtual tables. |
+
+---
+
+## 10. Licence cost
+
+**Prices checked 2026-08-21** against Microsoft's public pricing pages. They are **USD list,
+annual-commitment** figures. Microsoft's own note on the Power Apps pricing page applies:
+prices "may not be reflective of actual list price due to currency, country, and regional
+variant factors." Columbus's CSP or EA agreement will almost certainly differ. Treat the
+numbers below as an order-of-magnitude estimate to size the conversation, not as a quote.
+
+### 10.1 The question that decides the cost
+
+Everything turns on one thing: **are the inspectors already licensed for Dynamics 365?**
+
+Microsoft's rule is that Power Apps rights included with a Dynamics 365 licence may be used
+"only within the context of the licensed Dynamics 365 application", and in the **same
+environment** as that application.
+
+`QualityAPP_Mobile` fits that description about as cleanly as an app can:
+
+| Test | This app |
+|---|---|
+| Does it read/write only F&O data? | **Yes.** Six F&O virtual entities, listed in section 2 |
+| Any custom Dataverse tables? | **None.** Section 1 |
+| Any premium connectors? | **None.** No connection references at all |
+| Same environment as F&O? | **Yes.** Virtual entities only resolve in that environment |
+| Does it do anything unrelated to SCM? | **No.** It is a quality-inspection front end |
+
+So for a user who already holds a Dynamics 365 Supply Chain Management licence, this app is
+an extension of the application they are licensed for, and **should carry no additional
+licence cost**.
+
+> **This is a contractual judgement, not a technical one, and I am not qualified to give it.**
+> "In the context of" is Microsoft's phrase and it is deliberately interpretive. Confirm it
+> with Columbus's licensing desk or the Microsoft partner account before quoting a customer.
+> The technical facts in the table above are what they will need in order to rule, and every
+> one of them was read from the live environment.
+
+### 10.2 List prices
+
+| SKU | List price | Relevance |
+|---|---|---|
+| Dynamics 365 Supply Chain Management | **$210** user/month | The base F&O licence. Inspectors doing quality work in F&O need this regardless of the app |
+| D365 Supply Chain Management Premium | **$300** user/month | Only if Demand Planning forecast editing is required. Not needed by this app |
+| Power Apps Premium | **$20** user/month | Only if a user runs the app **without** a qualifying D365 licence |
+| Power Apps Premium, 2,000+ seats | **$12** user/month | Volume tier |
+| Dataverse database capacity add-on | **$40** GB/month | Pooled tenant-wide. See 10.4 |
+
+### 10.3 What it actually costs, by scenario
+
+**Scenario A - inspectors already have D365 SCM.** The likely case, since they are inspecting
+F&O quality orders and someone must be licensed to do that work in F&O anyway.
+
+> **Incremental licence cost of deploying this app: $0.**
+
+**Scenario B - inspectors are shop-floor users without a D365 licence.** They need a Power
+Apps Premium licence each, because the app is then a standalone application from a licensing
+point of view.
+
+| Inspectors | Power Apps Premium | Annual |
+|---:|---:|---:|
+| 10 | $200 / month | $2,400 |
+| 25 | $500 / month | $6,000 |
+| 50 | $1,000 / month | $12,000 |
+| 100 | $2,000 / month | $24,000 |
+
+Scenario B is worth pressure-testing before accepting it. A user with no D365 licence can
+still be blocked at the F&O end: the virtual entities enforce F&O security, so an unlicensed
+user may be able to open the app and still see nothing. Confirm the F&O access model for
+these users before assuming a Power Apps licence alone is sufficient.
+
+### 10.4 Storage
+
+This app adds **no Dataverse storage**. It has no custom tables and stores no rows; every
+record it touches lives in F&O and is surfaced through virtual entities, which hold no data
+in Dataverse. Photos are sent straight to F&O rather than staged locally.
+
+The 250 MB Dataverse database entitlement that comes with a Power Apps Premium licence is
+therefore ample, and the $40/GB add-on should not be needed for this solution.
+
+### 10.5 The tablet app is a different conversation
+
+`QualityManagementApp` is out of scope for this document, but if both apps are being migrated,
+be aware its licensing profile is materially worse and should be costed separately:
+
+| | Mobile | Tablet |
+|---|---|---|
+| Custom Dataverse tables | none | **11** (10 caches/drafts plus `cog_POLine`) |
+| Power Automate flows | none | **6** |
+| Connection references | none | 2 |
+| Dataverse storage | none | real, and grows with cache size |
+
+Custom tables holding copies of F&O data are harder to argue as "within the context of" the
+licensed D365 application than an app that reads F&O directly, and the flows raise a separate
+Power Automate question. That is not a conclusion, it is a flag: **the tablet app needs its
+own licensing review, and its answer may well differ from this one.**
+
+### Sources
+
+- Power Apps pricing: <https://www.microsoft.com/en-us/power-platform/products/power-apps/pricing>
+- Supply Chain Management pricing: <https://www.microsoft.com/en-us/dynamics-365/products/supply-chain-management/pricing>
+- Power Platform licensing FAQ: <https://learn.microsoft.com/en-us/power-platform/admin/powerapps-flow-licensing-faq>
+- Power Apps licensing FAQ: <https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-entity-licenses>
+- Dynamics 365 licensing guidance: <https://www.microsoft.com/licensing/guidance/Dynamics-365>
